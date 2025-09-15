@@ -1,0 +1,22 @@
+@startuml
+actor Student
+Student -> App : Choose "Drop"
+App -> EnrollmentService : drop(studentId, courseId)
+EnrollmentService -> EnrollmentRepository : check enrollment
+
+alt ENROLLED
+  EnrollmentService -> CourseRepository : decrement enrolled count
+  EnrollmentService -> StudentLog : log "DROPPED"
+  EnrollmentService -> EnrollmentRepository : find waitlist
+  alt waitlist not empty EnrollmentService -> first waitlisted student : promote to ENROLLED
+     EnrollmentService -> CourseRepository : increment enrolled count
+     EnrollmentService -> StudentLog : log "PROMOTED"
+  end
+else WAITLISTED
+  EnrollmentService -> CourseRepository : decrement waitlist size
+  EnrollmentService -> StudentLog : log "WAITLIST DROPPED"
+end
+
+EnrollmentService --> App : return result
+App --> Student : Show result
+@enduml

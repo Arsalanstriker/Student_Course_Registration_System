@@ -1,0 +1,21 @@
+@startuml
+actor Student
+Student -> App : Choose "Enroll"
+App -> EnrollmentService : enroll(studentId, courseId)
+EnrollmentService -> StudentRepository : findById(studentId)
+EnrollmentService -> CourseRepository : findById(courseId)
+
+alt seats available
+  EnrollmentService -> EnrollmentRepository : save ENROLLED
+  EnrollmentService -> CourseRepository : increment enrolled count
+  EnrollmentService -> StudentLog : log "ENROLLED"
+  EnrollmentService --> App : return ENROLLED
+else course full
+  EnrollmentService -> EnrollmentRepository : save WAITLISTED
+  EnrollmentService -> CourseRepository : increment waitlist size
+  EnrollmentService -> StudentLog : log "WAITLISTED"
+  EnrollmentService --> App : return WAITLISTED
+end
+
+App --> Student : Show result
+@enduml

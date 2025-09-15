@@ -1,0 +1,13 @@
+@startuml
+start
+:Login;
+:Search Course;
+if (Seats available?) then (Yes)
+  :Enroll Student;
+else (No)
+  :Add to Waitlist;
+endif
+:Checkout;
+:View Profile;
+stop
+@enduml

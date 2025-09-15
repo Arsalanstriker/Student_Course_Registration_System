@@ -1,0 +1,24 @@
+@startuml
+entity Student {
+  * studentId : String
+  name : String
+  email : String
+}
+
+entity Course {
+  * courseId : String
+  courseName : String
+  credits : int
+  capacity : int
+}
+
+entity Registration {
+  * registrationId : String
+  studentId : String
+  courseId : String
+  status : String
+}
+
+Student ||--o{ Registration : registers
+Course ||--o{ Registration : includes
+@enduml
