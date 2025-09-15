@@ -1,0 +1,74 @@
+[
+  {
+    "courseId": "1",
+    "title": "Java Fundamentals",
+    "instructor": "Rahul Patel",
+    "maxSeats": 15
+  },
+  {
+    "courseId": "2",
+    "title": "Data Structures and Algorithms",
+    "instructor": "Anjali Mehta",
+    "maxSeats": 12
+  },
+  {
+    "courseId": "3",
+    "title": "Python for Data Science",
+    "instructor": "Raj Singh",
+    "maxSeats": 5
+  },
+  {
+    "courseId": "4",
+    "title": "Machine Learning with TensorFlow",
+    "instructor": "Nisha Kapoor",
+    "maxSeats": 3
+  },
+  {
+    "courseId": "5",
+    "title": "Web Development Bootcamp",
+    "instructor": "Amit Sharma",
+    "maxSeats": 8
+  },
+  {
+    "courseId": "6",
+    "title": "Cloud Computing on AWS",
+    "instructor": "Priya Desai",
+    "maxSeats": 10
+  },
+  {
+    "courseId": "7",
+    "title": "Full-Stack Development with React and Node",
+    "instructor": "Vikram Reddy",
+    "maxSeats": 12
+  },
+  {
+    "courseId": "8",
+    "title": "Introduction to Cybersecurity",
+    "instructor": "Kavita Nair",
+    "maxSeats": 12
+  },
+  {
+    "courseId": "9",
+    "title": "Artificial Intelligence for Beginners",
+    "instructor": "Sanjay Iyer",
+    "maxSeats": 20
+  },
+  {
+    "courseId": "10",
+    "title": "DevOps Essentials with Docker and Kubernetes",
+    "instructor": "Meera Joshi",
+    "maxSeats": 25
+  },
+  {
+    "courseId": "11",
+    "title": "Blockchain Basics",
+    "instructor": "Deepak Malhotra",
+    "maxSeats": 20
+  },
+  {
+    "courseId": "12",
+    "title": "Natural Language Processing with Python",
+    "instructor": "Sneha Kulkarni",
+    "maxSeats": 11
+  }
+]
