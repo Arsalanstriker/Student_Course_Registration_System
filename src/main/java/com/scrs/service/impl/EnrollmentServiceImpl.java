@@ -45,13 +45,13 @@ public class EnrollmentServiceImpl implements EnrollmentService {
             throw new StudentNotFoundException(studentId);
         }
 
-        // ✅ Check max active enrollments
+        //  Check max active enrollments
         if (student.getActiveEnrollments() >= 5) {
             logger.error("Student {} already has max active enrollments", studentId);
             throw new MaxEnrollmentLimitException(studentId);
         }
 
-        // ✅ Prevent duplicate enrollment
+        //  Prevent duplicate enrollment
         Enrollment existing = enrollmentRepo.findById(studentId, courseId);
         if (existing != null) {
             logger.warn("Student {} is already enrolled/waitlisted in {}", studentId, courseId);
@@ -60,7 +60,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         Enrollment enrollment;
 
-        // ✅ Check if course is already full → then WAITLIST
+        // Check if course is already full → then WAITLIST
         if (!course.hasAvailableSeats()) {
             if (student.getWaitlistCount() >= 3) {
                 logger.error("Student {} already has 3 waitlisted courses", studentId);
@@ -78,7 +78,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
             logger.info("Student {} WAITLISTED for course {} at position {}",
                     studentId, courseId, enrollment.getWaitlistPosition());
         } else {
-            // ✅ Seats available → direct ENROLL
+            // Seats available → direct ENROLL
             enrollment = new Enrollment(studentId, courseId, EnrollmentStatus.ENROLLED);
             course.incrementEnrolled();
             student.incrementEnrollments();
