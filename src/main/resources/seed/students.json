@@ -1,0 +1,14 @@
+[
+  { "studentId": "S1", "name": "Aarav", "email": "aarav@mail.com" },
+  { "studentId": "S2", "name": "Isha", "email": "isha@mail.com" },
+  { "studentId": "S3", "name": "Rahul", "email": "rahul@mail.com" },
+  { "studentId": "S4", "name": "Priya", "email": "priya@mail.com" },
+  { "studentId": "S5", "name": "Ananya", "email": "ananya@mail.com" },
+  { "studentId": "S6", "name": "Vikram", "email": "vikram@mail.com" },
+  { "studentId": "S7", "name": "Neha", "email": "neha@mail.com" },
+  { "studentId": "S8", "name": "Ravi", "email": "ravi@mail.com" },
+  { "studentId": "S9", "name": "Kavya", "email": "kavya@mail.com" },
+  { "studentId": "S10", "name": "Amit", "email": "amit@mail.com" },
+  { "studentId": "S11", "name": "Simran", "email": "simran@mail.com" },
+  { "studentId": "S12", "name": "Arjun", "email": "arjun@mail.com" }
+]
