@@ -6,4 +6,3 @@ public enum EnrollmentStatus {
     DROPPED,
     COMPLETED
 }
-

@@ -1,30 +1,31 @@
-package com.scrs.Controller;
+package com.scrs.controller;
 
 import com.scrs.exception.EnrollmentException;
+import com.scrs.model.Enrollment;
 import com.scrs.service.EnrollmentService;
 
 public class EnrollmentController {
-    private final EnrollmentService enrollmentService;
+    private final EnrollmentService service;
 
-    public EnrollmentController(EnrollmentService enrollmentService) {
-        this.enrollmentService = enrollmentService;
+    public EnrollmentController(EnrollmentService service) {
+        this.service = service;
     }
 
     public void enroll(String studentId, String courseId) {
         try {
-            var enrollment = enrollmentService.enroll(studentId, courseId);
-            System.out.println("Enrollment status: " + enrollment.getStatus());
-        } catch (EnrollmentException e) {
-            System.err.println("Error: " + e.getMessage());
+            Enrollment e = service.enroll(studentId, courseId);
+            System.out.println("Enrollment status: " + e.getStatus());
+        } catch (EnrollmentException ex) {
+            System.err.println("Error: " + ex.getMessage());
         }
     }
 
     public void drop(String studentId, String courseId) {
         try {
-            enrollmentService.drop(studentId, courseId);
+            service.drop(studentId, courseId);
             System.out.println("Drop successful for " + studentId + " in " + courseId);
-        } catch (EnrollmentException e) {
-            System.err.println("Error: " + e.getMessage());
+        } catch (EnrollmentException ex) {
+            System.err.println("Error: " + ex.getMessage());
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.scrs.repository;
 
 import com.scrs.model.Student;
+
 import java.util.List;
 
 public interface StudentRepository {

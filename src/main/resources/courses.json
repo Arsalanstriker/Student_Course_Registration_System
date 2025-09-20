@@ -1,0 +1,4 @@
+[
+  { "courseId": "C101", "title": "Java Fundamentals", "instructor": "Rahul Patel", "maxSeats": 2 },
+  { "courseId": "C102", "title": "Data Structures", "instructor": "Anjali Mehta", "maxSeats": 1 }
+]

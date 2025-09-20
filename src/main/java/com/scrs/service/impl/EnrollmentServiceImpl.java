@@ -18,7 +18,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     private final StudentRepository studentRepo;
     private final EnrollmentRepository enrollmentRepo;
 
-    // Waitlists: Map<CourseId, Queue<StudentId>>
+    // Waitlists per course (in-memory queue)
     private final Map<String, Queue<String>> waitlists = new HashMap<>();
 
     public EnrollmentServiceImpl(CourseRepository courseRepo,
@@ -45,13 +45,13 @@ public class EnrollmentServiceImpl implements EnrollmentService {
             throw new StudentNotFoundException(studentId);
         }
 
-        //  Check max active enrollments
+        // Check student's max active enrollments (5)
         if (student.getActiveEnrollments() >= 5) {
             logger.error("Student {} already has max active enrollments", studentId);
             throw new MaxEnrollmentLimitException(studentId);
         }
 
-        //  Prevent duplicate enrollment
+        // Prevent duplicate enrollment or waitlist for same course
         Enrollment existing = enrollmentRepo.findById(studentId, courseId);
         if (existing != null) {
             logger.warn("Student {} is already enrolled/waitlisted in {}", studentId, courseId);
@@ -60,7 +60,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         Enrollment enrollment;
 
-        // Check if course is already full → then WAITLIST
+        // If course has no available seats -> waitlist
         if (!course.hasAvailableSeats()) {
             if (student.getWaitlistCount() >= 3) {
                 logger.error("Student {} already has 3 waitlisted courses", studentId);
@@ -78,10 +78,11 @@ public class EnrollmentServiceImpl implements EnrollmentService {
             logger.info("Student {} WAITLISTED for course {} at position {}",
                     studentId, courseId, enrollment.getWaitlistPosition());
         } else {
-            // Seats available → direct ENROLL
+            // Seats available -> enroll
             enrollment = new Enrollment(studentId, courseId, EnrollmentStatus.ENROLLED);
             course.incrementEnrolled();
             student.incrementEnrollments();
+
             logger.info("Student {} successfully ENROLLED in {}", studentId, courseId);
         }
 
@@ -115,7 +116,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
             student.decrementEnrollments();
             logger.info("Student {} DROPPED from {}", studentId, courseId);
 
-            // Promote from waitlist if available
+            // Promote next in waitlist
             Queue<String> waitlist = waitlists.get(courseId);
             if (waitlist != null && !waitlist.isEmpty()) {
                 String nextStudentId = waitlist.poll();
@@ -138,7 +139,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
                         logger.info("Student {} PROMOTED from waitlist to ENROLLED in {}",
                                 nextStudentId, courseId);
                     } else {
-                        // Student already at limit, re-add to front
+                        // re-add to queue (keeps FIFO but puts them at back)
                         waitlist.add(nextStudentId);
                         logger.warn("Student {} at max limit, kept in waitlist for {}",
                                 nextStudentId, courseId);

@@ -13,8 +13,11 @@ public class Course {
     private LocalDate startDate;
     private LocalDate endDate;
     private LocalDate latestEnrollmentBy;
-    private String level; // Beginner/Intermediate/Advanced
-    private String tags;  // Comma-separated
+    private String level;
+    private String tags;
+
+    // No-args constructor for Jackson
+    public Course() {}
 
     public Course(String courseId, String title, String instructor, int maxSeats) {
         this.courseId = courseId;
@@ -34,55 +37,57 @@ public class Course {
         return maxSeats - currentEnrolledCount;
     }
 
-    // Update counts
-    public void incrementEnrolled() {
-        currentEnrolledCount++;
-    }
-
-    public void decrementEnrolled() {
-        if (currentEnrolledCount > 0) currentEnrolledCount--;
-    }
-
-    public void incrementWaitlist() {
-        waitlistSize++;
-    }
-
-    public void decrementWaitlist() {
-        if (waitlistSize > 0) waitlistSize--;
-    }
-
-    // Getters
+    // Getters / Setters
     public String getCourseId() { return courseId; }
-    public String getTitle() { return title; }
-    public String getInstructor() { return instructor; }
-    public int getMaxSeats() { return maxSeats; }
-    public int getCurrentEnrolledCount() { return currentEnrolledCount; }
-    public int getWaitlistSize() { return waitlistSize; }
-    public LocalDate getStartDate() { return startDate; }
-    public LocalDate getEndDate() { return endDate; }
-    public LocalDate getLatestEnrollmentBy() { return latestEnrollmentBy; }
-    public String getLevel() { return level; }
-    public String getTags() { return tags; }
+    public void setCourseId(String courseId) { this.courseId = courseId; }
 
-    // Setters (if needed)
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
+    public String getInstructor() { return instructor; }
+    public void setInstructor(String instructor) { this.instructor = instructor; }
+
+    public int getMaxSeats() { return maxSeats; }
+    public void setMaxSeats(int maxSeats) { this.maxSeats = maxSeats; }
+
+    public int getCurrentEnrolledCount() { return currentEnrolledCount; }
+    public void setCurrentEnrolledCount(int currentEnrolledCount) { this.currentEnrolledCount = currentEnrolledCount; }
+
+    public int getWaitlistSize() { return waitlistSize; }
+    public void setWaitlistSize(int waitlistSize) { this.waitlistSize = waitlistSize; }
+
+    public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+
+    public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+
+    public LocalDate getLatestEnrollmentBy() { return latestEnrollmentBy; }
     public void setLatestEnrollmentBy(LocalDate latestEnrollmentBy) { this.latestEnrollmentBy = latestEnrollmentBy; }
+
+    public String getLevel() { return level; }
     public void setLevel(String level) { this.level = level; }
+
+    public String getTags() { return tags; }
     public void setTags(String tags) { this.tags = tags; }
 
-    //Debug helpers
-   //@Override
-    //       public String toString() {
-    //        return "Course{" +
-    //                "courseId='" + courseId + '\'' +
-    //                    ", title='" + title + '\'' +
-    //                   ", instructor='" + instructor + '\'' +
-    //                  ", maxSeats=" + maxSeats +
-    //                   ", enrolledCount=" + currentEnrolledCount +
-    //                   ", waitlistSize=" + waitlistSize +
-    //                   '}';
-    //        }
+    // Methods to update counts
+    public void incrementEnrolled() { currentEnrolledCount++; }
+    public void decrementEnrolled() { if (currentEnrolledCount > 0) currentEnrolledCount--; }
+    public void incrementWaitlist() { waitlistSize++; }
+    public void decrementWaitlist() { if (waitlistSize > 0) waitlistSize--; }
+
+    @Override
+    public String toString() {
+        return "Course{" +
+                "courseId='" + courseId + '\'' +
+                ", title='" + title + '\'' +
+                ", instructor='" + instructor + '\'' +
+                ", maxSeats=" + maxSeats +
+                ", enrolled=" + currentEnrolledCount +
+                ", waitlist=" + waitlistSize +
+                '}';
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -97,4 +102,3 @@ public class Course {
         return Objects.hash(courseId);
     }
 }
-

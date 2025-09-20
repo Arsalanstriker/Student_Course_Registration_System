@@ -7,7 +7,7 @@ public class SessionManager {
 
     public static void login(Student student) {
         currentStudent = student;
-        System.out.println("Logged in as " + student.getName());
+        System.out.println("Logged in as " + (student != null ? student.getName() : "null"));
     }
 
     public static Student getCurrentStudent() {
@@ -15,8 +15,7 @@ public class SessionManager {
     }
 
     public static void logout() {
-        System.out.println("Logged out " +
-                (currentStudent != null ? currentStudent.getName() : "No user"));
+        System.out.println("Logged out " + (currentStudent != null ? currentStudent.getName() : ""));
         currentStudent = null;
     }
 }

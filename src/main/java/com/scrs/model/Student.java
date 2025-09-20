@@ -4,27 +4,43 @@ public class Student {
     private String studentId;
     private String name;
     private String email;
-    private String passwordHash;
-    private int activeEnrollments;
-    private int waitlistCount;
+    private int activeEnrollments = 0;
+    private int waitlistCount = 0;
+
+    // No-args constructor for Jackson/deserialization
+    public Student() {}
 
     public Student(String studentId, String name, String email) {
         this.studentId = studentId;
         this.name = name;
         this.email = email;
-        this.activeEnrollments = 0;
-        this.waitlistCount = 0;
     }
 
-    // Getters & Setters
+    // Getters / Setters
     public String getStudentId() { return studentId; }
-    public String getName() { return name; }
-    public String getEmail() { return email; }
-    public int getActiveEnrollments() { return activeEnrollments; }
-    public int getWaitlistCount() { return waitlistCount; }
+    public void setStudentId(String studentId) { this.studentId = studentId; }
 
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public int getActiveEnrollments() { return activeEnrollments; }
+    public void setActiveEnrollments(int activeEnrollments) { this.activeEnrollments = activeEnrollments; }
+
+    public int getWaitlistCount() { return waitlistCount; }
+    public void setWaitlistCount(int waitlistCount) { this.waitlistCount = waitlistCount; }
+
+    // Helpers
     public void incrementEnrollments() { activeEnrollments++; }
     public void decrementEnrollments() { if (activeEnrollments > 0) activeEnrollments--; }
+
     public void incrementWaitlist() { waitlistCount++; }
     public void decrementWaitlist() { if (waitlistCount > 0) waitlistCount--; }
+
+    @Override
+    public String toString() {
+        return "Student{" + studentId + ',' + name + ',' + email + '}';
+    }
 }
