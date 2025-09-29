@@ -10,60 +10,66 @@ import java.util.List;
 import java.util.Map;
 
 public class DynamoDbEnrollmentRepository implements EnrollmentRepository {
-    private final DynamoDbClient client;
-    private final String tableName;
 
-    public DynamoDbEnrollmentRepository(DynamoDbClient client, String tableName) {
+    private final DynamoDbClient client;
+    private static final String TABLE = "Enrollments"; // 👉 Hardcoded table name
+
+    public DynamoDbEnrollmentRepository(DynamoDbClient client) {
         this.client = client;
-        this.tableName = tableName;
     }
 
     @Override
     public void save(Enrollment enrollment) {
         client.putItem(PutItemRequest.builder()
-                .tableName(tableName)
+                .tableName(TABLE)
                 .item(EnrollmentMapper.toItem(enrollment))
                 .build());
     }
 
     @Override
     public Enrollment findById(String studentId, String courseId) {
+        Map<String, AttributeValue> key = EnrollmentMapper.key(studentId, courseId);
         GetItemResponse response = client.getItem(GetItemRequest.builder()
-                .tableName(tableName)
-                .key(EnrollmentMapper.key(studentId, courseId))
+                .tableName(TABLE)
+                .key(key)
                 .build());
-
-        if (!response.hasItem()) return null;
-        return EnrollmentMapper.fromItem(response.item());
+        return response.hasItem() ? EnrollmentMapper.fromItem(response.item()) : null;
     }
 
     @Override
     public List<Enrollment> findByStudent(String studentId) {
-        QueryRequest request = QueryRequest.builder()
-                .tableName(tableName)
-                .keyConditionExpression("studentId = :sid")
+        ScanRequest scan = ScanRequest.builder()
+                .tableName(TABLE)
+                .filterExpression("studentId = :sid")
                 .expressionAttributeValues(Map.of(":sid", AttributeValue.fromS(studentId)))
                 .build();
-
-        QueryResponse response = client.query(request);
-
-        List<Enrollment> enrollments = new ArrayList<>();
-        response.items().forEach(item -> enrollments.add(EnrollmentMapper.fromItem(item)));
-        return enrollments;
+        ScanResponse response = client.scan(scan);
+        List<Enrollment> list = new ArrayList<>();
+        for (Map<String, AttributeValue> item : response.items()) {
+            list.add(EnrollmentMapper.fromItem(item));
+        }
+        return list;
     }
 
     @Override
-    public List<Enrollment> findAll() {
-        ScanResponse response = client.scan(ScanRequest.builder().tableName(tableName).build());
-        List<Enrollment> enrollments = new ArrayList<>();
-        response.items().forEach(item -> enrollments.add(EnrollmentMapper.fromItem(item)));
-        return enrollments;
+    public List<Enrollment> findByCourse(String courseId) {
+        ScanRequest scan = ScanRequest.builder()
+                .tableName(TABLE)
+                .filterExpression("courseId = :cid")
+                .expressionAttributeValues(Map.of(":cid", AttributeValue.fromS(courseId)))
+                .build();
+        ScanResponse response = client.scan(scan);
+        List<Enrollment> list = new ArrayList<>();
+        for (Map<String, AttributeValue> item : response.items()) {
+            list.add(EnrollmentMapper.fromItem(item));
+        }
+        return list;
     }
 
     @Override
     public void delete(String studentId, String courseId) {
         client.deleteItem(DeleteItemRequest.builder()
-                .tableName(tableName)
+                .tableName(TABLE)
                 .key(EnrollmentMapper.key(studentId, courseId))
                 .build());
     }

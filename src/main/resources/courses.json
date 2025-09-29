@@ -1,4 +1,29 @@
 [
-  { "courseId": "C101", "title": "Java Fundamentals", "instructor": "Rahul Patel", "maxSeats": 2 },
-  { "courseId": "C102", "title": "Data Structures", "instructor": "Anjali Mehta", "maxSeats": 1 }
+  {
+    "courseId": "C101",
+    "title": "Java Fundamentals",
+    "maxSeats": 2,
+    "tags": "Java, Programming, Basics",
+    "startDate": "2025-11-01",
+    "endDate": "2025-12-30",
+    "latestEnrollmentBy": "2025-010-21"
+  },
+  {
+    "courseId": "C102",
+    "title": "Data Structures",
+    "maxSeats": 3,
+    "tags": "DSA, Algorithms, Coding",
+    "startDate": "2025-12-01",
+    "endDate": "2026-01-15",
+    "latestEnrollmentBy": "2025-11-30"
+  },
+  {
+    "courseId": "C103",
+    "title": "Cloud Fundamentals",
+    "maxSeats": 5,
+    "tags": "Cloud, AWS, Basics",
+    "startDate": "2025-12-05",
+    "endDate": "2026-02-05",
+    "latestEnrollmentBy": "2025-12-04"
+  }
 ]

@@ -7,48 +7,57 @@ import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class DynamoDbStudentRepository implements StudentRepository {
-    private final DynamoDbClient client;
-    private final String tableName;
 
-    public DynamoDbStudentRepository(DynamoDbClient client, String tableName) {
+    private final DynamoDbClient client;
+    private static final String TABLE = "Students";
+
+    public DynamoDbStudentRepository(DynamoDbClient client) {
         this.client = client;
-        this.tableName = tableName;
     }
 
     @Override
     public void save(Student student) {
         client.putItem(PutItemRequest.builder()
-                .tableName(tableName)
+                .tableName(TABLE)
                 .item(StudentMapper.toItem(student))
                 .build());
     }
 
     @Override
     public Student findById(String studentId) {
+        Map<String, AttributeValue> key = StudentMapper.key(studentId);
         GetItemResponse response = client.getItem(GetItemRequest.builder()
-                .tableName(tableName)
-                .key(StudentMapper.key(studentId))
+                .tableName(TABLE)
+                .key(key)
                 .build());
+        return response.hasItem() ? StudentMapper.fromItem(response.item()) : null;
+    }
 
-        if (!response.hasItem()) return null;
-        return StudentMapper.fromItem(response.item());
+    @Override
+    public Student findByName(String name) {
+        ScanRequest scan = ScanRequest.builder()
+                .tableName(TABLE)
+                .filterExpression("name = :n")
+                .expressionAttributeValues(Map.of(":n", AttributeValue.fromS(name)))
+                .build();
+
+        ScanResponse response = client.scan(scan);
+        if (!response.items().isEmpty()) {
+            return StudentMapper.fromItem(response.items().get(0));
+        }
+        return null;
     }
 
     @Override
     public List<Student> findAll() {
-        ScanResponse response = client.scan(ScanRequest.builder().tableName(tableName).build());
-        List<Student> students = new ArrayList<>();
-        response.items().forEach(item -> students.add(StudentMapper.fromItem(item)));
-        return students;
-    }
-
-    @Override
-    public void delete(String studentId) {
-        client.deleteItem(DeleteItemRequest.builder()
-                .tableName(tableName)
-                .key(StudentMapper.key(studentId))
-                .build());
+        ScanResponse response = client.scan(ScanRequest.builder().tableName(TABLE).build());
+        List<Student> list = new ArrayList<>();
+        for (Map<String, AttributeValue> item : response.items()) {
+            list.add(StudentMapper.fromItem(item));
+        }
+        return list;
     }
 }

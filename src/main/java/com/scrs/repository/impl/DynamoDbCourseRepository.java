@@ -7,48 +7,42 @@ import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class DynamoDbCourseRepository implements CourseRepository {
-    private final DynamoDbClient client;
-    private final String tableName;
 
-    public DynamoDbCourseRepository(DynamoDbClient client, String tableName) {
+    private final DynamoDbClient client;
+    private static final String TABLE = "Courses"; // 👉 Hardcoded table name
+
+    public DynamoDbCourseRepository(DynamoDbClient client) {
         this.client = client;
-        this.tableName = tableName;
     }
 
     @Override
     public void save(Course course) {
         client.putItem(PutItemRequest.builder()
-                .tableName(tableName)
+                .tableName(TABLE)
                 .item(CourseMapper.toItem(course))
                 .build());
     }
 
     @Override
     public Course findById(String courseId) {
+        Map<String, AttributeValue> key = CourseMapper.key(courseId);
         GetItemResponse response = client.getItem(GetItemRequest.builder()
-                .tableName(tableName)
-                .key(CourseMapper.key(courseId))
+                .tableName(TABLE)
+                .key(key)
                 .build());
-
-        if (!response.hasItem()) return null;
-        return CourseMapper.fromItem(response.item());
+        return response.hasItem() ? CourseMapper.fromItem(response.item()) : null;
     }
 
     @Override
     public List<Course> findAll() {
-        ScanResponse response = client.scan(ScanRequest.builder().tableName(tableName).build());
-        List<Course> courses = new ArrayList<>();
-        response.items().forEach(item -> courses.add(CourseMapper.fromItem(item)));
-        return courses;
-    }
-
-    @Override
-    public void delete(String courseId) {
-        client.deleteItem(DeleteItemRequest.builder()
-                .tableName(tableName)
-                .key(CourseMapper.key(courseId))
-                .build());
+        ScanResponse response = client.scan(ScanRequest.builder().tableName(TABLE).build());
+        List<Course> list = new ArrayList<>();
+        for (Map<String, AttributeValue> item : response.items()) {
+            list.add(CourseMapper.fromItem(item));
+        }
+        return list;
     }
 }

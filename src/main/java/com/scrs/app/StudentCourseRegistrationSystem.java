@@ -6,111 +6,163 @@ import com.scrs.model.Enrollment;
 import com.scrs.model.Student;
 import com.scrs.service.EnrollmentService;
 import com.scrs.service.impl.EnrollmentServiceImpl;
+import com.scrs.repository.CourseRepository;
+import com.scrs.repository.StudentRepository;
+//import com.scrs.util.DataLoader;
+import com.scrs.util.JsonCourseLoader;
+import com.scrs.util.SessionManager;
+import com.scrs.util.TableInitializer;
 
 import java.util.List;
 import java.util.Scanner;
 
 public class StudentCourseRegistrationSystem {
-    private static final Scanner scanner = new Scanner(System.in);
-
     public static void main(String[] args) {
-        var courseRepo = RepositoryFactory.courseRepository();
-        var studentRepo = RepositoryFactory.studentRepository();
-        var enrollmentRepo = RepositoryFactory.enrollmentRepository();
-        EnrollmentService service = new EnrollmentServiceImpl(courseRepo, studentRepo, enrollmentRepo);
+        // Build DB tables only if missing (fast startup)
+        TableInitializer.main(args);
 
-        System.out.println("🎓 Welcome to the Student Course Registration System!");
+        // Seed students (courses come only from JSON file)
+       // DataLoader.seedStudents();
+        JsonCourseLoader.seedCourses("src/main/resources/courses.json");
 
-        String studentId = null;
+        EnrollmentService service = new EnrollmentServiceImpl(
+                RepositoryFactory.courseRepository(),
+                RepositoryFactory.studentRepository(),
+                RepositoryFactory.enrollmentRepository()
+        );
+
+        StudentRepository studentRepo = RepositoryFactory.studentRepository();
+        CourseRepository courseRepo = RepositoryFactory.courseRepository();
+
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Welcome to SCRS (Student Course Registration System)");
+
         while (true) {
-            try {
-                if (studentId == null) {
-                    showAuthMenu();
-                    int choice = Integer.parseInt(scanner.nextLine());
+            if (!SessionManager.isLoggedIn()) {
+                // 👉 Not logged in yet
+                System.out.println("\nMain Menu:");
+                System.out.println("1. Signup");
+                System.out.println("2. Login");
+                System.out.println("3. Exit");
+                System.out.print("Choice: ");
+                String c = sc.nextLine();
 
-                    switch (choice) {
-                        case 1 -> {
-                            System.out.print("Enter studentId: ");
-                            studentId = scanner.nextLine();
-                            System.out.print("Enter name: ");
-                            String name = scanner.nextLine();
-                            System.out.print("Enter email: ");
-                            String email = scanner.nextLine();
+                switch (c) {
+                    case "1": // Signup
+                        System.out.print("Enter new StudentId: ");
+                        String sid = sc.nextLine();
+                        System.out.print("Name: ");
+                        String name = sc.nextLine();
+                        System.out.print("Email: ");
+                        String email = sc.nextLine();
+                        studentRepo.save(new Student(sid, name, email));
+                        System.out.println("Signup successful for " + sid);
+                        break;
 
-                            Student s = new Student(studentId, name, email);
-                            studentRepo.save(s);
-                            System.out.println("✅ Signup successful!");
-                        }
-                        case 2 -> {
-                            System.out.print("Enter studentId: ");
-                            String id = scanner.nextLine();
-                            if (studentRepo.findById(id) != null) {
-                                studentId = id;
-                                System.out.println("✅ Login successful!");
-                            } else {
-                                System.out.println("❌ Student not found. Please sign up first.");
-                            }
-                        }
-                        case 3 -> System.exit(0);
-                    }
-                } else {
-                    showMainMenu();
-                    int choice = Integer.parseInt(scanner.nextLine());
+                    case "2": // Login
+                        System.out.print("Enter StudentId or Name: ");
+                        String loginInput = sc.nextLine();
+                        Student st = studentRepo.findById(loginInput);
+                        if (st == null) st = studentRepo.findByName(loginInput);
 
-                    switch (choice) {
-                        case 1 -> {
-                            List<Course> courses = courseRepo.findAll();
-                            courses.forEach(c -> System.out.println(
-                                    c.getCourseId() + " - " + c.getTitle() +
-                                            " | Seats: " + c.getCurrentEnrolledCount() + "/" + c.getMaxSeats()
-                            ));
+                        if (st == null) {
+                            System.out.println("Student not found. Please signup first.");
+                        } else {
+                            SessionManager.login(st.getStudentId());
+                            System.out.println("Welcome, " + st.getName() + "!");
                         }
-                        case 2 -> {
-                            System.out.print("Enter courseId: ");
-                            String courseId = scanner.nextLine();
-                            try {
-                                Enrollment e = service.enroll(studentId, courseId);
-                                System.out.println("✅ Status: " + e.getStatus());
-                            } catch (Exception ex) {
-                                System.out.println("❌ " + ex.getMessage());
-                            }
-                        }
-                        case 3 -> {
-                            System.out.print("Enter courseId: ");
-                            String courseId = scanner.nextLine();
-                            service.drop(studentId, courseId);
-                            System.out.println("✅ Dropped from course " + courseId);
-                        }
-                        case 4 -> {
-                            List<Enrollment> myEnrollments = enrollmentRepo.findByStudent(studentId);
-                            if (myEnrollments.isEmpty()) {
-                                System.out.println("📭 No enrollments yet.");
-                            } else {
-                                myEnrollments.forEach(e -> System.out.println(
-                                        e.getCourseId() + " -> " + e.getStatus()
-                                ));
-                            }
-                        }
-                        case 5 -> {
-                            studentId = null;
-                            System.out.println("🔒 Logged out.");
-                        }
-                        case 6 -> System.exit(0);
-                    }
+                        break;
+
+                    case "3":
+                        System.out.println("Goodbye!");
+                        sc.close();
+                        return;
+
+                    default:
+                        System.out.println("Invalid choice.");
                 }
-            } catch (Exception e) {
-                System.out.println("⚠️ Error: " + e.getMessage());
+            } else {
+                // 👉 Student is logged in
+                System.out.println("\nDashboard:");
+                System.out.println("1. View All Courses");
+                System.out.println("2. Search Course by Keyword (tags/title)");
+                System.out.println("3. View My Enrollments");
+                System.out.println("4. Logout");
+                System.out.print("Choice: ");
+                String c = sc.nextLine();
+
+                switch (c) {
+                    case "1": // Show all courses
+                        List<Course> courses = courseRepo.findAll();
+                        System.out.println("\nAvailable Courses:");
+                        for (Course ci : courses) {
+                            System.out.println(ci.getCourseId() + " | " + ci.getTitle() +
+                                    " | Seats: " + ci.getCurrentEnrolledCount() + "/" + ci.getMaxSeats() +
+                                    " | Deadline: " + ci.getLatestEnrollmentBy());
+                        }
+                        System.out.print("Enter CourseId to enroll or 'back': ");
+                        String courseId = sc.nextLine();
+                        if (!courseId.equalsIgnoreCase("back")) {
+                            try {
+                                Enrollment enr = service.enroll(SessionManager.getCurrentStudentId(), courseId);
+                                System.out.println("Enrollment status: " + enr.getStatus());
+                            } catch (Exception ex) {
+                                System.out.println("Error: " + ex.getMessage());
+                            }
+                        }
+                        break;
+
+                    case "2": // Search by tag/title
+                        System.out.print("Enter keyword (e.g., Java, Cloud, Beginner): ");
+                        String keyword = sc.nextLine().toLowerCase();
+                        List<Course> matches = courseRepo.findAll().stream()
+                                .filter(ci -> ci.getTitle().toLowerCase().contains(keyword) ||
+                                        (ci.getTags() != null && ci.getTags().toLowerCase().contains(keyword)))
+                                .toList();
+
+                        if (matches.isEmpty()) {
+                            System.out.println("No courses found for: " + keyword);
+                        } else {
+                            for (Course ci : matches) {
+                                System.out.println(ci.getCourseId() + " | " + ci.getTitle() +
+                                        " | Seats: " + ci.getCurrentEnrolledCount() + "/" + ci.getMaxSeats() +
+                                        " | Deadline: " + ci.getLatestEnrollmentBy());
+                            }
+                        }
+                        break;
+
+                    case "3": // My Enrollments
+                        List<Enrollment> myEnrolls =
+                                RepositoryFactory.enrollmentRepository().findByStudent(SessionManager.getCurrentStudentId());
+                        System.out.println("\nMy Enrollments:");
+                        if (myEnrolls.isEmpty()) {
+                            System.out.println("No enrollments yet.");
+                        } else {
+                            for (Enrollment e : myEnrolls) {
+                                System.out.println(e.getCourseId() + " | Status: " + e.getStatus());
+                            }
+                            System.out.print("Enter CourseId to drop or 'back': ");
+                            String dropId = sc.nextLine();
+                            if (!dropId.equalsIgnoreCase("back")) {
+                                try {
+                                    service.drop(SessionManager.getCurrentStudentId(), dropId);
+                                    System.out.println("Dropped successfully.");
+                                } catch (Exception ex) {
+                                    System.out.println("Error: " + ex.getMessage());
+                                }
+                            }
+                        }
+                        break;
+
+                    case "4":
+                        SessionManager.logout();
+                        System.out.println("Logged out.");
+                        break;
+
+                    default:
+                        System.out.println("Invalid choice.");
+                }
             }
         }
-    }
-
-    private static void showAuthMenu() {
-        System.out.println("\n1. Sign Up\n2. Login\n3. Exit");
-        System.out.print("Choose: ");
-    }
-
-    private static void showMainMenu() {
-        System.out.println("\n1. View Courses\n2. Enroll in Course\n3. Drop Course\n4. View My Enrollments\n5. Logout\n6. Exit");
-        System.out.print("Choose: ");
     }
 }

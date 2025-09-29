@@ -1,157 +1,123 @@
 package com.scrs.service.impl;
 
-import com.scrs.exception.*;
-import com.scrs.model.*;
+import com.scrs.exception.CourseNotFoundException;
+import com.scrs.exception.MaxEnrollmentLimitException;
+import com.scrs.exception.StudentNotFoundException;
+import com.scrs.exception.WaitlistFullException;
+import com.scrs.model.Course;
+import com.scrs.model.Enrollment;
+import com.scrs.model.EnrollmentStatus;
+import com.scrs.model.Student;
 import com.scrs.repository.CourseRepository;
 import com.scrs.repository.EnrollmentRepository;
 import com.scrs.repository.StudentRepository;
 import com.scrs.service.EnrollmentService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
+
 
 public class EnrollmentServiceImpl implements EnrollmentService {
-    private static final Logger logger = LoggerFactory.getLogger(EnrollmentServiceImpl.class);
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_RESET = "\u001B[0m";
+
 
     private final CourseRepository courseRepo;
     private final StudentRepository studentRepo;
     private final EnrollmentRepository enrollmentRepo;
 
-    // Waitlists per course (in-memory queue)
-    private final Map<String, Queue<String>> waitlists = new HashMap<>();
-
-    public EnrollmentServiceImpl(CourseRepository courseRepo,
-                                 StudentRepository studentRepo,
-                                 EnrollmentRepository enrollmentRepo) {
+    public EnrollmentServiceImpl(CourseRepository courseRepo, StudentRepository studentRepo, EnrollmentRepository enrollmentRepo) {
         this.courseRepo = courseRepo;
         this.studentRepo = studentRepo;
         this.enrollmentRepo = enrollmentRepo;
     }
 
     @Override
-    public Enrollment enroll(String studentId, String courseId){
-        logger.info("Attempting to enroll student {} into course {}", studentId, courseId);
-
+    public Enrollment enroll(String studentId, String courseId) {
         Course course = courseRepo.findById(courseId);
+        if (course == null) throw new CourseNotFoundException(courseId);
+
         Student student = studentRepo.findById(studentId);
+        if (student == null) throw new StudentNotFoundException(studentId);
 
-        if (course == null) {
-            logger.error("Course {} not found", courseId);
-            throw new CourseNotFoundException(courseId);
-        }
-        if (student == null) {
-            logger.error("Student {} not found", studentId);
-            throw new StudentNotFoundException(studentId);
+        // ❌ Block if enrollment date has passed
+        if (course.getLatestEnrollmentBy() != null &&
+                LocalDate.now().isAfter(course.getLatestEnrollmentBy())) {
+            throw new RuntimeException(ANSI_RED +"Enrollment Closed "+ ANSI_RESET);
         }
 
-        // Check student's max active enrollments (5)
-        if (student.getActiveEnrollments() >= 5) {
-            logger.error("Student {} already has max active enrollments", studentId);
-            throw new MaxEnrollmentLimitException(studentId);
-        }
+        if (student.getActiveEnrollments() >= 5) throw new MaxEnrollmentLimitException(studentId);
 
-        // Prevent duplicate enrollment or waitlist for same course
+        // Prevent duplicate enrollment IF exists returns Already enrolled
         Enrollment existing = enrollmentRepo.findById(studentId, courseId);
-        if (existing != null) {
-            logger.warn("Student {} is already enrolled/waitlisted in {}", studentId, courseId);
-            return existing;
-        }
+        if (existing != null)
+            System.out.println("Already Enrolled in the Same Course");//As Student alredy enrrolled
 
-        Enrollment enrollment;
-
-        // If course has no available seats -> waitlist
-        if (!course.hasAvailableSeats()) {
-            if (student.getWaitlistCount() >= 3) {
-                logger.error("Student {} already has 3 waitlisted courses", studentId);
-                throw new WaitlistFullException(courseId);
-            }
-
-            enrollment = new Enrollment(studentId, courseId, EnrollmentStatus.WAITLISTED);
-            Queue<String> waitlist = waitlists.computeIfAbsent(courseId, k -> new LinkedList<>());
-            waitlist.add(studentId);
-
-            enrollment.setWaitlistPosition(waitlist.size());
-            course.incrementWaitlist();
-            student.incrementWaitlist();
-
-            logger.info("Student {} WAITLISTED for course {} at position {}",
-                    studentId, courseId, enrollment.getWaitlistPosition());
-        } else {
-            // Seats available -> enroll
-            enrollment = new Enrollment(studentId, courseId, EnrollmentStatus.ENROLLED);
+        if (course.hasAvailableSeats()) {
+            Enrollment e = new Enrollment(studentId, courseId, EnrollmentStatus.ENROLLED);
+            e.setTimestamp(LocalDateTime.now());
             course.incrementEnrolled();
             student.incrementEnrollments();
+            enrollmentRepo.save(e);
+            courseRepo.save(course);
+            studentRepo.save(student);
+            return e;
+        } else {
+            if (student.getWaitlistCount() >= 3) throw new WaitlistFullException(courseId);
 
-            logger.info("Student {} successfully ENROLLED in {}", studentId, courseId);
+            Enrollment wl = new Enrollment(studentId, courseId, EnrollmentStatus.WAITLISTED);
+            wl.setTimestamp(LocalDateTime.now());
+
+            List<Enrollment> waitlisted = enrollmentRepo.findByCourse(courseId).stream()
+                    .filter(e -> e.getStatus() == EnrollmentStatus.WAITLISTED)
+                    .toList();
+
+            wl.setWaitlistPosition(waitlisted.size() + 1);
+            enrollmentRepo.save(wl);
+
+            course.incrementWaitlist();
+            student.incrementWaitlist();
+            courseRepo.save(course);
+            studentRepo.save(student);
+
+            return wl;
         }
-
-        enrollmentRepo.save(enrollment);
-        courseRepo.save(course);
-        studentRepo.save(student);
-        return enrollment;
     }
 
     @Override
     public void drop(String studentId, String courseId) {
-        logger.info("Student {} attempting to drop course {}", studentId, courseId);
+        Enrollment e = enrollmentRepo.findById(studentId, courseId);
+        if (e == null) return;
 
         Course course = courseRepo.findById(courseId);
         Student student = studentRepo.findById(studentId);
-        Enrollment enrollment = enrollmentRepo.findById(studentId, courseId);
 
-        if (course == null) {
-            throw new CourseNotFoundException(courseId);
-        }
-        if (student == null) {
-            throw new StudentNotFoundException(studentId);
-        }
-        if (enrollment == null) {
-            logger.warn("No enrollment found for student {} in {}", studentId, courseId);
-            return;
-        }
-
-        if (enrollment.getStatus() == EnrollmentStatus.ENROLLED) {
+        if (e.getStatus() == EnrollmentStatus.ENROLLED) {
             course.decrementEnrolled();
             student.decrementEnrollments();
-            logger.info("Student {} DROPPED from {}", studentId, courseId);
 
-            // Promote next in waitlist
-            Queue<String> waitlist = waitlists.get(courseId);
-            if (waitlist != null && !waitlist.isEmpty()) {
-                String nextStudentId = waitlist.poll();
-                Enrollment next = enrollmentRepo.findById(nextStudentId, courseId);
-                Student nextStudent = studentRepo.findById(nextStudentId);
+            // Promote from waitlist if available
+            List<Enrollment> waitlisted = enrollmentRepo.findByCourse(courseId).stream()
+                    .filter(en -> en.getStatus() == EnrollmentStatus.WAITLISTED)
+                    .sorted(Comparator.comparing(Enrollment::getTimestamp))
+                    .toList();
 
-                if (next != null && next.getStatus() == EnrollmentStatus.WAITLISTED) {
-                    if (nextStudent.getActiveEnrollments() < 5) {
-                        next.setStatus(EnrollmentStatus.ENROLLED);
-                        next.setWaitlistPosition(0);
-                        nextStudent.decrementWaitlist();
-                        nextStudent.incrementEnrollments();
+            if (!waitlisted.isEmpty()) {
+                Enrollment promote = waitlisted.get(0);
+                promote.setStatus(EnrollmentStatus.ENROLLED);
+                promote.setWaitlistPosition(0);
 
-                        enrollmentRepo.save(next);
-                        studentRepo.save(nextStudent);
+                course.decrementWaitlist();
+                course.incrementEnrolled();
+                studentRepo.findById(promote.getStudentId()).incrementEnrollments();
 
-                        course.incrementEnrolled();
-                        course.decrementWaitlist();
-
-                        logger.info("Student {} PROMOTED from waitlist to ENROLLED in {}",
-                                nextStudentId, courseId);
-                    } else {
-                        // re-add to queue (keeps FIFO but puts them at back)
-                        waitlist.add(nextStudentId);
-                        logger.warn("Student {} at max limit, kept in waitlist for {}",
-                                nextStudentId, courseId);
-                    }
-                }
+                enrollmentRepo.save(promote);
             }
-        } else if (enrollment.getStatus() == EnrollmentStatus.WAITLISTED) {
+        } else if (e.getStatus() == EnrollmentStatus.WAITLISTED) {
             course.decrementWaitlist();
             student.decrementWaitlist();
-            Queue<String> waitlist = waitlists.get(courseId);
-            if (waitlist != null) waitlist.remove(studentId);
-            logger.info("Student {} removed from WAITLIST for {}", studentId, courseId);
         }
 
         enrollmentRepo.delete(studentId, courseId);

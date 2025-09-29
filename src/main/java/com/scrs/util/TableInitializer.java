@@ -7,84 +7,47 @@ import software.amazon.awssdk.services.dynamodb.model.*;
 import java.util.List;
 
 public class TableInitializer {
-
     private static final DynamoDbClient client = DynamoDbConfig.createClient();
 
     public static void main(String[] args) {
-        createStudentsTable();
-        createCoursesTable();
-        createEnrollmentsTable();
-
-        System.out.println("✅ Tables created/verified successfully!");
+        createTableIfNotExists("Students", "studentId");
+        createTableIfNotExists("Courses", "courseId");
+        createTableIfNotExists("Enrollments", "studentId", "courseId");
     }
 
-    private static void createStudentsTable() {
-        String tableName = "Students";
-        if (tableExists(tableName)) {
-            System.out.println("ℹ️ Students table already exists.");
-            return;
+    // 👉 This makes sure we don’t rebuild tables every run (faster startup)
+    private static void createTableIfNotExists(String tableName, String... keys) {
+        try {
+            ListTablesResponse tables = client.listTables();
+            if (tables.tableNames().contains(tableName)) {
+                System.out.println("Table exists: " + tableName);
+                return;
+            }
+
+            CreateTableRequest.Builder request = CreateTableRequest.builder()
+                    .tableName(tableName)
+                    .billingMode(BillingMode.PAY_PER_REQUEST);
+
+            if (keys.length == 1) {
+                request.keySchema(KeySchemaElement.builder()
+                        .attributeName(keys[0]).keyType(KeyType.HASH).build());
+                request.attributeDefinitions(AttributeDefinition.builder()
+                        .attributeName(keys[0]).attributeType(ScalarAttributeType.S).build());
+            } else if (keys.length == 2) {
+                request.keySchema(
+                        KeySchemaElement.builder().attributeName(keys[0]).keyType(KeyType.HASH).build(),
+                        KeySchemaElement.builder().attributeName(keys[1]).keyType(KeyType.RANGE).build()
+                );
+                request.attributeDefinitions(
+                        AttributeDefinition.builder().attributeName(keys[0]).attributeType(ScalarAttributeType.S).build(),
+                        AttributeDefinition.builder().attributeName(keys[1]).attributeType(ScalarAttributeType.S).build()
+                );
+            }
+
+            client.createTable(request.build());
+            System.out.println("Table created: " + tableName);
+        } catch (Exception e) {
+            System.err.println("Error creating table " + tableName + ": " + e.getMessage());
         }
-
-        client.createTable(CreateTableRequest.builder()
-                .tableName(tableName)
-                .attributeDefinitions(
-                        AttributeDefinition.builder().attributeName("studentId").attributeType(ScalarAttributeType.S).build()
-                )
-                .keySchema(
-                        KeySchemaElement.builder().attributeName("studentId").keyType(KeyType.HASH).build()
-                )
-                .billingMode(BillingMode.PAY_PER_REQUEST)
-                .build());
-
-        System.out.println("✅ Students table created.");
-    }
-
-    private static void createCoursesTable() {
-        String tableName = "Courses";
-        if (tableExists(tableName)) {
-            System.out.println("ℹ️ Courses table already exists.");
-            return;
-        }
-
-        client.createTable(CreateTableRequest.builder()
-                .tableName(tableName)
-                .attributeDefinitions(
-                        AttributeDefinition.builder().attributeName("courseId").attributeType(ScalarAttributeType.S).build()
-                )
-                .keySchema(
-                        KeySchemaElement.builder().attributeName("courseId").keyType(KeyType.HASH).build()
-                )
-                .billingMode(BillingMode.PAY_PER_REQUEST)
-                .build());
-
-        System.out.println("✅ Courses table created.");
-    }
-
-    private static void createEnrollmentsTable() {
-        String tableName = "Enrollments";
-        if (tableExists(tableName)) {
-            System.out.println("ℹ️ Enrollments table already exists.");
-            return;
-        }
-
-        client.createTable(CreateTableRequest.builder()
-                .tableName(tableName)
-                .attributeDefinitions(
-                        AttributeDefinition.builder().attributeName("studentId").attributeType(ScalarAttributeType.S).build(),
-                        AttributeDefinition.builder().attributeName("courseId").attributeType(ScalarAttributeType.S).build()
-                )
-                .keySchema(
-                        KeySchemaElement.builder().attributeName("studentId").keyType(KeyType.HASH).build(),
-                        KeySchemaElement.builder().attributeName("courseId").keyType(KeyType.RANGE).build()
-                )
-                .billingMode(BillingMode.PAY_PER_REQUEST)
-                .build());
-
-        System.out.println("✅ Enrollments table created.");
-    }
-
-    private static boolean tableExists(String tableName) {
-        ListTablesResponse tables = client.listTables();
-        return tables.tableNames().contains(tableName);
     }
 }
