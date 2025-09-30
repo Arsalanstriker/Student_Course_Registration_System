@@ -41,14 +41,40 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                sh '''
-                echo "Deploying to Linux VM..."
-                scp target/student-course-reg-system-1.0-SNAPSHOT.jar user@your-vm-ip:/home/user/
-                ssh user@your-vm-ip "nohup java -jar /home/user/student-course-reg-system-1.0-SNAPSHOT.jar &"
-                '''
-            }
+       stage('Deploy Locally (Windows)') {
+           steps {
+               powershell '''
+               $workspace = "${env.WORKSPACE}"
+               $appDir = "C:\\app"
+               $jarSource = Join-Path $workspace "target\\student-course-registration-1.0-SNAPSHOT.jar"
+               $jarDest = Join-Path $appDir "student-course-registration-1.0-SNAPSHOT.jar"
+
+               # Create app directory if it doesn't exist
+               if (!(Test-Path $appDir)) {
+                   New-Item -Path $appDir -ItemType Directory | Out-Null
+               }
+
+               # Copy JAR
+               if (Test-Path $jarSource) {
+                   Copy-Item -Path $jarSource -Destination $jarDest -Force
+               } else {
+                   Write-Error "JAR file not found at $jarSource"
+                   exit 1
+               }
+
+               # Kill running Java processes with this JAR
+               Get-Process java -ErrorAction SilentlyContinue | Where-Object {
+                   $_.Path -like "*student-course-registration*"
+               } | Stop-Process -Force
+
+               # Start new process with log redirection
+               Start-Process "java" -ArgumentList "-jar $jarDest" `
+                   -RedirectStandardOutput "$appDir\\app.log" `
+                   -RedirectStandardError "$appDir\\app-error.log"
+               '''
+           }
+       }
+
         }
     }
 }
