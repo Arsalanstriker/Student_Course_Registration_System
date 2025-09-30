@@ -1,6 +1,6 @@
 # 🎓 Student Course Registration System (CLI + DynamoDB + Jenkins CI/CD)
 
-## 📌 Project Overview
+##  Project Overview
 This is a **Command-Line Interface (CLI) Student-Course Registration System** built in Java.  
 It simulates a simple learning platform where students can log in, view available courses, enroll, and manage waitlists.  
 All data (students, courses, enrollments) is stored in **AWS DynamoDB** (local or cloud).  
@@ -223,11 +223,3 @@ JUnit testing
 Jenkins CI/CD pipeline
 
 Final Deliverable → A working CLI Student-Course Registration System deployed via Jenkins to a Linux VM.
-
-
----
-
-✅ This is a **ready-to-use README**: you can paste it directly into your GitHub repo.  
-It doubles as your **final report** for Day 10.  
-
-👉 Do you also want me to prepare a **simple ASCII pipeline diagram** inside this README (GitHub → Jenkins → VM → Running App) so it looks more professional?
