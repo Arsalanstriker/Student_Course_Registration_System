@@ -4,11 +4,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Arsalanstriker/Student_Course_Registration_System.git'
+                git branch: 'main', url: 'https://github.com/your-username/your-repo.git'
             }
         }
 
-        stage('Build') {
+        stage('Build with Maven') {
             steps {
                 bat 'mvn clean package -DskipTests'
             }
@@ -20,27 +20,30 @@ pipeline {
             }
         }
 
-        stage('Archive JAR') {
-            steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            }
-        }
-
-        stage('Docker Build & Run') {
+        stage('Docker Build') {
             steps {
                 script {
                     sh 'docker build -t student-course-registration:1.0 .'
-                    sh 'docker rm -f scrs-app || true'
-                    sh 'docker run --name scrs-app -d student-course-registration:1.0'
                 }
             }
         }
+
+        stage('Docker Compose Up') {
+            steps {
+                script {
+                    sh 'docker-compose down || true'
+                    sh 'docker-compose up -d --build'
+                }
+            }
+        }
+    }
+
     post {
         success {
-            echo "✅ Build & Deployment Successful"
+            echo "✅ CI/CD & Deployment Successful (Dockerized)"
         }
         failure {
-            echo "❌ Build or Deployment Failed"
+            echo "❌ Build/Deployment Failed"
         }
     }
 }
