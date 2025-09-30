@@ -25,14 +25,31 @@ pipeline {
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
+
+        stage('Deploy Locally') {
+            steps {
+                powershell '''
+                $appDir = "C:\\app"
+                if (!(Test-Path $appDir)) { New-Item -Path $appDir -ItemType Directory }
+
+                Copy-Item -Path target\\student-course-registration-1.0-SNAPSHOT.jar -Destination $appDir -Force
+
+                # Kill any existing process
+                Get-Process java -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*student-course-registration-1.0-SNAPSHOT.jar*" } | Stop-Process -Force
+
+                # Start new one
+                Start-Process "java" -ArgumentList "-jar $appDir\\student-course-registration-1.0-SNAPSHOT.jar" -RedirectStandardOutput "$appDir\\app.log" -RedirectStandardError "$appDir\\app-error.log"
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo "✅ Build Successful"
+            echo "✅ Build & Deployment Successful"
         }
         failure {
-            echo "❌ Build Failed"
+            echo "❌ Build or Deployment Failed"
         }
     }
 }
