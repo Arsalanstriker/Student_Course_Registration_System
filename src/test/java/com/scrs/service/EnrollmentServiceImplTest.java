@@ -48,4 +48,5 @@ class EnrollmentServiceImplTest {
         var e2 = service.enroll("S1", "C1");
         assertSame(e1.getStatus(), e2.getStatus(), "Duplicate should not create new record");
     }
+
 }

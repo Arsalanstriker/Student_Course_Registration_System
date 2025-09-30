@@ -94,4 +94,5 @@ public class DynamoDbIntegrationTest {
         assertEquals(EnrollmentStatus.ENROLLED, afterDropS2.getStatus());
         assertEquals(EnrollmentStatus.WAITLISTED, afterDropS3.getStatus());
     }
+    
 }

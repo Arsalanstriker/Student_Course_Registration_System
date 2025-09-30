@@ -8,11 +8,12 @@ import com.scrs.service.EnrollmentService;
 import com.scrs.service.impl.EnrollmentServiceImpl;
 import com.scrs.repository.CourseRepository;
 import com.scrs.repository.StudentRepository;
-//import com.scrs.util.DataLoader;
+import com.scrs.util.DataLoader;
 import com.scrs.util.JsonCourseLoader;
 import com.scrs.util.SessionManager;
 import com.scrs.util.TableInitializer;
 
+import java.nio.file.LinkOption;
 import java.util.List;
 import java.util.Scanner;
 
@@ -22,7 +23,7 @@ public class StudentCourseRegistrationSystem {
         TableInitializer.main(args);
 
         // Seed students (courses come only from JSON file)
-       // DataLoader.seedStudents();
+       DataLoader.seedStudents();
         JsonCourseLoader.seedCourses("src/main/resources/courses.json");
 
         EnrollmentService service = new EnrollmentServiceImpl(
@@ -65,7 +66,7 @@ public class StudentCourseRegistrationSystem {
                         Student st = studentRepo.findById(loginInput);
                         if (st == null) st = studentRepo.findByName(loginInput);
 
-                        if (st == null) {
+                        if ( st == null) {
                             System.out.println("Student not found. Please signup first.");
                         } else {
                             SessionManager.login(st.getStudentId());

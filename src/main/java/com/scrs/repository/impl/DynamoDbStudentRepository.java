@@ -38,10 +38,18 @@ public class DynamoDbStudentRepository implements StudentRepository {
 
     @Override
     public Student findByName(String name) {
+        // Alias "name" because it's reserved
+        Map<String, String> expressionNames = Map.of("#nm", "name");
+
+        Map<String, AttributeValue> expressionValues = Map.of(
+                ":n", AttributeValue.fromS(name)
+        );
+
         ScanRequest scan = ScanRequest.builder()
                 .tableName(TABLE)
-                .filterExpression("name = :n")
-                .expressionAttributeValues(Map.of(":n", AttributeValue.fromS(name)))
+                .filterExpression("#nm = :n")
+                .expressionAttributeNames(expressionNames)
+                .expressionAttributeValues(expressionValues)
                 .build();
 
         ScanResponse response = client.scan(scan);
@@ -50,6 +58,7 @@ public class DynamoDbStudentRepository implements StudentRepository {
         }
         return null;
     }
+
 
     @Override
     public List<Student> findAll() {

@@ -13,22 +13,22 @@ import com.scrs.repository.EnrollmentRepository;
 import com.scrs.repository.StudentRepository;
 import com.scrs.service.EnrollmentService;
 
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
-
 
 public class EnrollmentServiceImpl implements EnrollmentService {
     public static final String ANSI_RED = "\u001B[31m";
     public static final String ANSI_RESET = "\u001B[0m";
 
-
     private final CourseRepository courseRepo;
     private final StudentRepository studentRepo;
     private final EnrollmentRepository enrollmentRepo;
 
-    public EnrollmentServiceImpl(CourseRepository courseRepo, StudentRepository studentRepo, EnrollmentRepository enrollmentRepo) {
+    public EnrollmentServiceImpl(CourseRepository courseRepo,
+                                 StudentRepository studentRepo,
+                                 EnrollmentRepository enrollmentRepo) {
         this.courseRepo = courseRepo;
         this.studentRepo = studentRepo;
         this.enrollmentRepo = enrollmentRepo;
@@ -42,18 +42,20 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         Student student = studentRepo.findById(studentId);
         if (student == null) throw new StudentNotFoundException(studentId);
 
-        // ❌ Block if enrollment date has passed
+        //  Block if enrollment date has passed
         if (course.getLatestEnrollmentBy() != null &&
                 LocalDate.now().isAfter(course.getLatestEnrollmentBy())) {
-            throw new RuntimeException(ANSI_RED +"Enrollment Closed "+ ANSI_RESET);
+            throw new RuntimeException(ANSI_RED + "Enrollment Closed " + ANSI_RESET);
         }
 
-        if (student.getActiveEnrollments() >= 5) throw new MaxEnrollmentLimitException(studentId);
+        if (student.getActiveEnrollments() >= 5)
+            throw new MaxEnrollmentLimitException(studentId);
 
-        // Prevent duplicate enrollment IF exists returns Already enrolled
+        // Duplicate check: return existing record immediately
         Enrollment existing = enrollmentRepo.findById(studentId, courseId);
-        if (existing != null)
-            System.out.println("Already Enrolled in the Same Course");//As Student alredy enrrolled
+        if (existing != null) {
+            return existing; // do not create a new enrollment
+        }
 
         if (course.hasAvailableSeats()) {
             Enrollment e = new Enrollment(studentId, courseId, EnrollmentStatus.ENROLLED);
@@ -65,7 +67,8 @@ public class EnrollmentServiceImpl implements EnrollmentService {
             studentRepo.save(student);
             return e;
         } else {
-            if (student.getWaitlistCount() >= 3) throw new WaitlistFullException(courseId);
+            if (student.getWaitlistCount() >= 3)
+                throw new WaitlistFullException(courseId);
 
             Enrollment wl = new Enrollment(studentId, courseId, EnrollmentStatus.WAITLISTED);
             wl.setTimestamp(LocalDateTime.now());
@@ -111,9 +114,13 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
                 course.decrementWaitlist();
                 course.incrementEnrolled();
-                studentRepo.findById(promote.getStudentId()).incrementEnrollments();
+
+                Student nextStudent = studentRepo.findById(promote.getStudentId());
+                nextStudent.decrementWaitlist();
+                nextStudent.incrementEnrollments();
 
                 enrollmentRepo.save(promote);
+                studentRepo.save(nextStudent);
             }
         } else if (e.getStatus() == EnrollmentStatus.WAITLISTED) {
             course.decrementWaitlist();
