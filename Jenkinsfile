@@ -26,24 +26,15 @@ pipeline {
             }
         }
 
-        stage('Deploy Locally') {
+        stage('Docker Build & Run') {
             steps {
-                powershell '''
-                $appDir = "C:\\app"
-                if (!(Test-Path $appDir)) { New-Item -Path $appDir -ItemType Directory }
-
-                Copy-Item -Path target\\student-course-registration-1.0-SNAPSHOT.jar -Destination $appDir -Force
-
-                # Kill any existing process
-                Get-Process java -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*student-course-registration-1.0-SNAPSHOT.jar*" } | Stop-Process -Force
-
-                # Start new one
-                Start-Process "java" -ArgumentList "-jar $appDir\\student-course-registration-1.0-SNAPSHOT.jar" -RedirectStandardOutput "$appDir\\app.log" -RedirectStandardError "$appDir\\app-error.log"
-                '''
+                script {
+                    sh 'docker build -t student-course-registration:1.0 .'
+                    sh 'docker rm -f scrs-app || true'
+                    sh 'docker run --name scrs-app -d student-course-registration:1.0'
+                }
             }
         }
-    }
-
     post {
         success {
             echo "✅ Build & Deployment Successful"
