@@ -12,8 +12,8 @@ services:
     depends_on:
       - dynamodb-local
     environment:
-      - AWS_ACCESS_KEY_ID=fakeMyKeyId
-      - AWS_SECRET_ACCESS_KEY=fakeSecretAccessKey
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
       - AWS_REGION=us-east-1
       - DYNAMODB_ENDPOINT=http://dynamodb-local:8001
     stdin_open: true
