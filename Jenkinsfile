@@ -29,7 +29,12 @@ pipeline {
         stage('Docker Compose Up') {
             steps {
                 powershell '''
-                docker-compose down || echo "No containers to stop"
+                try {
+                    docker-compose ps
+                    docker-compose down
+                } catch {
+                    Write-Output "No containers to stop"
+                }
                 docker-compose up -d --build
                 '''
             }
