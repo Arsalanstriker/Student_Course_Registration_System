@@ -22,18 +22,16 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                script {
-                    sh 'docker build -t student-course-registration:1.0 .'
-                }
+                powershell 'docker build -t student-course-registration:1.0 .'
             }
         }
 
         stage('Docker Compose Up') {
             steps {
-                script {
-                    sh 'docker-compose down || true'
-                    sh 'docker-compose up -d --build'
-                }
+                powershell '''
+                docker-compose down || echo "No containers to stop"
+                docker-compose up -d --build
+                '''
             }
         }
     }
