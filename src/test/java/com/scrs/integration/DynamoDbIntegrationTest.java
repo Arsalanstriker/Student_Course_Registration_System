@@ -1,6 +1,7 @@
 package com.scrs.integration;
 
 import com.scrs.config.RepositoryFactory;
+import com.scrs.exception.DuplicateEnrollmentException;
 import com.scrs.model.Course;
 import com.scrs.model.Enrollment;
 import com.scrs.model.EnrollmentStatus;
@@ -68,11 +69,13 @@ public class DynamoDbIntegrationTest {
 
     @Test
     void testDuplicateEnrollmentIsBlocked() {
-        Enrollment first = service.enroll("S1", "C101");
-        Enrollment second = service.enroll("S1", "C101");
-        assertNotNull(second);
-        assertEquals(first.getStatus(), second.getStatus(), "Duplicate should return same status, not new enrollment");
+        service.enroll("S1", "C101"); // First time succeeds
+
+        assertThrows(DuplicateEnrollmentException.class,
+                () -> service.enroll("S1", "C101"),
+                "Second enrollment of same student in same course should throw DuplicateEnrollmentException");
     }
+
 
     @Test
     void testMultipleWaitlistPromotionOrder() {

@@ -14,18 +14,18 @@ public class JsonCourseLoader {
     public static void seedCourses(String filePath) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule()); // 👉 Helps parse LocalDate
+            mapper.registerModule(new JavaTimeModule()); //  Helps parse LocalDate
 
             List<Course> courses = mapper.readValue(new File(filePath), new TypeReference<>() {});
             CourseRepository repo = RepositoryFactory.courseRepository();
 
             for (Course c : courses) {
-                // 👉 Only save if this course does NOT already exist in DB
+                //  Only save if this course does NOT already exist in DB
                 if (repo.findById(c.getCourseId()) == null) {
                     repo.save(c);
                 }
             }
-            System.out.println("Courses synced from JSON (only new ones).");
+            System.out.println("");
         } catch (Exception e) {
             throw new RuntimeException("Failed to load courses.json", e);
         }

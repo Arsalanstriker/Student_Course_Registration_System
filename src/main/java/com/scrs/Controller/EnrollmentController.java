@@ -1,4 +1,4 @@
-package com.scrs.controller;
+package com.scrs.Controller;
 
 import com.scrs.exception.EnrollmentException;
 import com.scrs.model.Enrollment;

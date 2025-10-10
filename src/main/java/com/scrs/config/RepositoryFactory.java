@@ -10,17 +10,19 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 public class RepositoryFactory {
     private static final DynamoDbClient client = DynamoDbConfig.createClient();
-
+//creating repos
     public static StudentRepository studentRepository() {
-        // 👉 Only one argument now
+
         return new DynamoDbStudentRepository(client);
     }
 
     public static CourseRepository courseRepository() {
+
         return new DynamoDbCourseRepository(client);
     }
 
     public static EnrollmentRepository enrollmentRepository() {
+
         return new DynamoDbEnrollmentRepository(client);
     }
 }

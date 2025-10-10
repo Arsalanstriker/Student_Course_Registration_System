@@ -71,7 +71,7 @@ public class CourseMapper {
     // Primary key
     public static Map<String, AttributeValue> key(String courseId) {
         Map<String, AttributeValue> key = new HashMap<>();
-        key.put("courseId", AttributeValue.fromS(courseId));
+        key.put("courseId", AttributeValue.fromS(courseId));//Primary key
         return key;
     }
 }

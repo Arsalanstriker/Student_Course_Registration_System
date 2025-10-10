@@ -7,7 +7,7 @@ public class Course {
     private String courseId;
     private String title;
     private int maxSeats;
-    private int currentEnrolledCount;
+    private int currentEnrolledCount ;
     private int waitlistSize;   //  keep your naming
     private LocalDate startDate;
     private LocalDate endDate;
@@ -16,7 +16,7 @@ public class Course {
 
     // No-args constructor for Jackson / DynamoDB mapping
     public Course() {}
-
+    //Arg constructor
     public Course(String courseId, String title, int maxSeats) {
         this.courseId = courseId;
         this.title = title;
@@ -25,28 +25,27 @@ public class Course {
         this.waitlistSize = 0;
     }
 
-    // ✅ Seat availability logic
-    public boolean hasAvailableSeats() {
-        return currentEnrolledCount < maxSeats;
-    }
+    //Seat availability logic
+    //public boolean hasAvailableSeats() {
+    //           return currentEnrolledCount < maxSeats;
+    //       }
+    //    //
+    //      public int remainingSeats() {
+    //          return maxSeats - currentEnrolledCount;
+    //      }
 
-    public int remainingSeats() {
-        return maxSeats - currentEnrolledCount;
-    }
+    // Helper methods
+    //public void incrementEnrolled() { currentEnrolledCount++; }
+    //    public void decrementEnrolled() { if (currentEnrolledCount > 0) currentEnrolledCount--; }
+    //    public void incrementWaitlist() { waitlistSize++; }
+    //    public void decrementWaitlist() { if (waitlistSize > 0) waitlistSize--; }
 
-    // ✅ Counter methods
-    public void incrementEnrolled() { currentEnrolledCount++; }
-    public void decrementEnrolled() { if (currentEnrolledCount > 0) currentEnrolledCount--; }
-    public void incrementWaitlist() { waitlistSize++; }
-    public void decrementWaitlist() { if (waitlistSize > 0) waitlistSize--; }
-
-    // ✅ Getters / Setters
+    // Getters / Setters
     public String getCourseId() { return courseId; }
     public void setCourseId(String courseId) { this.courseId = courseId; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
-
 
     public int getMaxSeats() { return maxSeats; }
     public void setMaxSeats(int maxSeats) { this.maxSeats = maxSeats; }

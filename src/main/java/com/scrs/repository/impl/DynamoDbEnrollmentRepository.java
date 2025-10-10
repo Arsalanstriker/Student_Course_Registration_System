@@ -12,12 +12,13 @@ import java.util.Map;
 public class DynamoDbEnrollmentRepository implements EnrollmentRepository {
 
     private final DynamoDbClient client;
-    private static final String TABLE = "Enrollments"; // 👉 Hardcoded table name
+    private static final String TABLE = "Enrollments"; //  Hardcoded table name
 
     public DynamoDbEnrollmentRepository(DynamoDbClient client) {
+
         this.client = client;
     }
-
+    // CRUD operations
     @Override
     public void save(Enrollment enrollment) {
         client.putItem(PutItemRequest.builder()
@@ -27,8 +28,9 @@ public class DynamoDbEnrollmentRepository implements EnrollmentRepository {
     }
 
     @Override
+    //Uses both studentId and courseId as key.
     public Enrollment findById(String studentId, String courseId) {
-        Map<String, AttributeValue> key = EnrollmentMapper.key(studentId, courseId);
+        Map<String, AttributeValue> key = EnrollmentMapper.key(studentId, courseId);//Uses both studentId and courseId as key.
         GetItemResponse response = client.getItem(GetItemRequest.builder()
                 .tableName(TABLE)
                 .key(key)

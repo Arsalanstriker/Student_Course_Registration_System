@@ -38,7 +38,7 @@ public class DynamoDbStudentRepository implements StudentRepository {
 
     @Override
     public Student findByName(String name) {
-        // Alias "name" because it's reserved
+        //Find by name
         Map<String, String> expressionNames = Map.of("#nm", "name");
 
         Map<String, AttributeValue> expressionValues = Map.of(

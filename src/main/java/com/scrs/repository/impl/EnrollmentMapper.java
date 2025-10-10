@@ -21,8 +21,8 @@ public class EnrollmentMapper {
 
     public static Map<String, AttributeValue> key(String studentId, String courseId) {
         Map<String, AttributeValue> key = new HashMap<>();
-        key.put("studentId", AttributeValue.fromS(studentId));
-        key.put("courseId", AttributeValue.fromS(courseId));
+        key.put("studentId", AttributeValue.fromS(studentId));//Keys(Pk)-->Primary key
+        key.put("courseId", AttributeValue.fromS(courseId));//Key(SK)-->sortKey
         return key;
     }
 

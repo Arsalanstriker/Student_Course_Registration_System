@@ -1,6 +1,6 @@
 [
   {
-    "courseId": "C101",
+    "courseId": "C1",
     "title": "Python for Beginners",
     "maxSeats": 3,
     "tags": "Python, Programming, Basics",
@@ -9,7 +9,7 @@
     "latestEnrollmentBy": "2025-09-15"
   },
   {
-    "courseId": "C102",
+    "courseId": "C2",
     "title": "Machine Learning Basics",
     "maxSeats": 4,
     "tags": "Machine Learning, AI, Basics",
@@ -18,7 +18,7 @@
     "latestEnrollmentBy": "2025-12-01"
   },
   {
-    "courseId": "C103",
+    "courseId": "C3",
     "title": "Web Development with React",
     "maxSeats": 2,
     "tags": "React, JavaScript, Web Development",
@@ -27,7 +27,7 @@
     "latestEnrollmentBy": "2025-11-30"
   },
   {
-    "courseId": "C104",
+    "courseId": "C4",
     "title": "Advanced SQL Techniques",
     "maxSeats": 5,
     "tags": "SQL, Database, Advanced",
@@ -36,12 +36,43 @@
     "latestEnrollmentBy": "2025-10-20"
   },
   {
-    "courseId": "C105",
+    "courseId": "C5",
     "title": "Cybersecurity Essentials",
     "maxSeats": 6,
     "tags": "Security, Cybersecurity, Basics",
     "startDate": "2025-12-15",
     "endDate": "2026-02-10",
-    "latestEnrollmentBy": "2025-12-10"
+    "latestEnrollmentBy": "2025-12-10",
+    "currentEnrolledCount": 5
+  },
+  {
+    "courseId": "C6",
+    "title": "AWS & DevOps",
+    "maxSeats": 10,
+    "tags": "AWS, DevOps, Basics",
+    "startDate": "2025-12-15",
+    "endDate": "2026-02-10",
+    "latestEnrollmentBy": "2025-12-10",
+    "currentEnrolledCount":7
+  },
+  {
+    "courseId": "C7",
+    "title": " Java Advanced",
+    "maxSeats": 8,
+    "tags": "Java, Advanced, DSA",
+    "startDate": "2025-12-15",
+    "endDate": "2026-02-10",
+    "latestEnrollmentBy": "2025-12-10",
+    "currentEnrolledCount": 7
+  },
+  {
+    "courseId": "C8",
+    "title": " Azure",
+    "maxSeats": 6,
+    "tags": "Cloud, EC, Storage",
+    "startDate": "2025-12-15",
+    "endDate": "2026-02-10",
+    "latestEnrollmentBy": "2025-12-10",
+    "currentEnrolledCount": 6
   }
 ]

@@ -12,4 +12,6 @@ public interface CourseRepository {
 
     //  Get all available courses
     List<Course> findAll();
+
+    void delete(String courseId);
 }

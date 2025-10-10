@@ -4,8 +4,8 @@ public class Student {
     private String studentId;
     private String name;
     private String email;
-    private int activeEnrollments = 0;
-    private int waitlistCount = 0;
+    private int activeEnrollments ;
+    private int waitlistCount ;
 
     // No-args constructor for Jackson/deserialization
     public Student() {}

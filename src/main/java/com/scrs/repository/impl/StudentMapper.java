@@ -20,7 +20,7 @@ public class StudentMapper {
 
     static Map<String, AttributeValue> key(String studentId) {
         Map<String, AttributeValue> key = new HashMap<>();
-        key.put("studentId", AttributeValue.fromS(studentId));
+        key.put("studentId", AttributeValue.fromS(studentId));//Primary Key
         return key;
     }
 

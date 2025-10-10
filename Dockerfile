@@ -1,14 +1,12 @@
-# Use official Java 17 runtime
-FROM openjdk:17-jdk-slim
-
-# Set working directory
+# Dockerfile
+FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /app
+COPY pom.xml .
+RUN mvn -q -DskipTests dependency:go-offline
+COPY src ./src
+RUN mvn -q -DskipTests package
 
-# Copy JAR from Maven build
-COPY target/student-course-registration-1.0-SNAPSHOT.jar app.jar
-
-# Expose port (optional, if later turned into API)
-EXPOSE 8080
-
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+COPY --from=build /app/target/*-SNAPSHOT.jar app.jar
+ENTRYPOINT ["java","-jar","/app/app.jar"]

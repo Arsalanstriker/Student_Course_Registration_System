@@ -1,225 +1,120 @@
-# 🎓 Student Course Registration System (CLI + DynamoDB + Jenkins CI/CD)
+# 🎓 Student Course Registration System (SCRS)
 
-##  Project Overview
-This is a **Command-Line Interface (CLI) Student-Course Registration System** built in Java.  
-It simulates a simple learning platform where students can log in, view available courses, enroll, and manage waitlists.  
-All data (students, courses, enrollments) is stored in **AWS DynamoDB** (local or cloud).  
-
-The project was developed in **10 days** as part of a structured roadmap covering:
-- Linux basics
-- Java (OOP, Collections, Debugging)
-- DynamoDB integration
-- JUnit testing
-- Jenkins CI/CD pipeline
+I designed and implemented a **console-based Student Course Registration System** in Java.  
+The system allows students to sign up, log in, view courses, enroll, drop, and manage waitlists — all backed by **DynamoDB Local**.
 
 ---
 
 ## 🚀 Features
-- **Student Management**
-  - Register & log in using **ID or name**
-- **Course Management**
-  - Courses seeded from JSON or DynamoDB
-  - Admin can add new courses via JSON file
-  - Each course shows:
-    - Name
-    - Tags (e.g., Java, Cloud)
-    - Seats left
-    - Enrollment deadline
-- **Enrollment & Waitlist**
-  - Students can enroll if seats are available
-  - Waitlisting when full
-  - Auto-promotion when a seat frees up
-  - Max 5 enrollments / 3 waitlists per student
-- **Persistence**
-  - DynamoDB stores all student, course, and enrollment data
-  - Data survives across multiple runs
-- **Search**
-  - Search courses by tags or keywords
-- **Logging**
-  - SLF4J + Logback for clean logs
+- **Student Management**: 
+- Signup, login with ID or name.
+- **Course Management**:
+- View courses, search by tags, enrollment deadlines.
+- **Enrollment Rules**:
+    - Max 5 active enrollments per student.
+    - Waitlist up to 3 per student.
+    - Deadline checks for course registration.
+- **Admin Support**:
+- Load/seed courses from JSON into DynamoDB.
+-   - View all students, courses, enrollments
+
+- **Persistence**: 
+- DynamoDB Local (no data loss between runs).
+- **CLI Interface**: 
+- Clean menu-driven navigation.
+# Main menu 
+1) Sign up
+2) Login
+3) Exit
 
 ---
 
 ## 🛠️ Tech Stack
-- **Language**: Java 17  
-- **Database**: AWS DynamoDB (Local / Cloud)  
-- **Build Tool**: Maven  
-- **Testing**: JUnit 5  
-- **Logging**: SLF4J + Logback  
-- **DevOps**: Jenkins CI/CD pipeline  
-
----
-
-## 📂 Project Structure
-src/
-├── main/java/com/scrs
-│ ├── app # CLI entry point
-│ ├── config # RepositoryFactory, DynamoDB config
-│ ├── controller # CLI controllers
-│ ├── exception # Custom exceptions
-│ ├── model # Student, Course, Enrollment
-│ ├── repository # Interfaces
-│ │ └── impl # DynamoDB implementations
-│ ├── service # Interfaces
-│ │ └── impl # Business logic
-│ └── util # DataLoader, SessionManager, DbCleaner
-├── main/resources # JSON seed data
-└── test/java/com/scrs # JUnit tests
-
+- **Java 17**
+- **Maven**
+- **DynamoDB Local** (Amazon NoSQL database)
+- **JUnit 5** (testing)
+- **Docker & Docker Compose**
+- **Jenkins (CI/CD)**
 
 
 ---
 
-## ⚙️ Local Setup & Run
+## 🧪 Testing
 
-### 1. Start DynamoDB Local
-Download from AWS and run:
+I added **JUnit5 test cases**:
+- `EnrollmentServiceImplTest` → validates service logic (duplicate check, waitlist, drop).
+- `DynamoDbIntegrationTest` → validates integration with DynamoDB Local.
+
+Run tests with:
 ```bash
-java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb
-
-
-2. Build & Run Application
-mvn clean package
-java -jar target/student-course-reg-system-1.0-SNAPSHOT.jar
-
-🤖 Jenkins CI/CD Pipeline
-Pipeline Flow
-GitHub → Jenkins → Build → Test → Package → Deploy → Linux VM
-
-Stages
-
-Checkout – Clone code from GitHub
-
-Build – Compile Java code (mvn clean compile)
-
-Test – Run unit tests (mvn test)
-
-Package – Create executable .jar
-
-Deploy – Copy .jar to VM & run with Java
-
-Jenkinsfile
-pipeline {
-    agent any
-    tools {
-        maven 'Maven3'
-        jdk 'JDK17'
-    }
-    stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/your-username/student-course-reg-system.git'
-            }
-        }
-        stage('Build') {
-            steps {
-                sh 'mvn clean compile'
-            }
-        }
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
-            }
-        }
-        stage('Package') {
-            steps {
-                sh 'mvn package -DskipTests'
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-                }
-            }
-        }
-        stage('Deploy') {
-            steps {
-                sh '''
-                echo "Deploying to Linux VM..."
-                scp target/student-course-reg-system-1.0-SNAPSHOT.jar user@your-vm-ip:/home/user/
-                ssh user@your-vm-ip "nohup java -jar /home/user/student-course-reg-system-1.0-SNAPSHOT.jar &"
-                '''
-            }
-        }
-    }
-}
-
-
-👉 Builds are triggered manually in Jenkins (no GitHub webhook).
-
-🖥️ Linux VM Deployment
-1. Install Java
-sudo apt update && sudo apt install openjdk-17-jdk -y
-
-2. Deploy with Jenkins
-
-Jenkins copies .jar → VM (scp)
-
-Starts app with:
-
-nohup java -jar student-course-reg-system-1.0-SNAPSHOT.jar &
-
-3. Verify
-ps -ef | grep java
-tail -f nohup.out
-
-✅ Testing
-
-Run all tests:
-
 mvn test
 
+---
 
-Unit Tests → Enrollment rules, login
+## 📦 Build & Run
 
-Integration Tests → DynamoDB persistence, enrollments
+### Local (without Docker)
+```bash
+mvn clean package
+java -jar target/student-course-registration-1.0-SNAPSHOT.jar
 
-📊 Final Report Summary
 
-Goal Achieved: Built a CLI Student-Course Registration System with persistence + CI/CD.
 
-Key Strengths:
+##  📂 Project Structure
 
-Enrollment & waitlist logic
+Student-Course-Registration-System/
+├── src/
+│   ├── main/java/com/scrs/
+│   │   ├── app/StudentCourseRegistrationSystem.java   # Main CLI
+│   │   ├── config/DynamoDbConfig.java
+│   │   ├── model/ (Student, Course, Enrollment, Enums)
+│   │   ├── repository/ (Interfaces)
+│   │   ├── repository/impl/ (DynamoDb Repos + Mappers)
+│   │   ├── service/ (Interfaces)
+│   │   ├── service/impl/ (EnrollmentServiceImpl, etc)
+│   │   └── exception/ (Custom exceptions)
+│   └── test/java/com/scrs/
+│       ├── integration/DynamoDbIntegrationTest.java
+│       ├── service/EnrollmentServiceImplTest.java
+│       └── ...
+├── pom.xml
+├── Dockerfile
+├── docker-compose.yml
+├── Jenkinsfile
+├── README.md   # Project summary
+└── docs/
+    ├── report.docx   # Final Report 
+    └── uml.puml      # PlantUML diagrams
 
-JSON course seeding
+#### 🔄 CI/CD Pipeline
+GitHub → stores project source code.
+I set up Jenkins Pipeline to:
 
-DynamoDB persistence
+1) Pull code from GitHub
 
-Jenkins pipeline automation
+2) Build & run tests
 
-Demo Flow:
+3) Package JAR
 
-Student signs up / logs in
+4) Build Docker image
 
-Student views & searches courses
+5) Deploy with Docker Compose
 
-Student enrolls or waitlisted
+6) Run health checks
 
-Dropping course promotes waitlist
+7)  Auto teardown after pipeline
 
-Admin adds new courses via JSON
+- Starts 
+docker-compose up --build -d
 
-Jenkins builds & deploys app to VM
+run from CLI
+git clone https://github.com/Arsalanstriker/Student_Course_Registration_System.git
+cd Student_Course_Registration_System
 
-🎉 Conclusion
+mvn clean package
 
-This project was completed in 10 days covering:
+Run ith docker 
+docker-compose up --build -d
 
-Linux fundamentals
-
-Java OOP & collections
-
-DynamoDB integration
-
-CLI app development
-
-JUnit testing
-
-Jenkins CI/CD pipeline
-
-Final Deliverable → A working CLI Student-Course Registration System deployed via Jenkins to a Linux VM.
+---------------------------- ***************** -----------------------------------

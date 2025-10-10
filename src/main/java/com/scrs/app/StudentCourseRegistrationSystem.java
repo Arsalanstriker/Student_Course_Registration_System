@@ -1,169 +1,243 @@
 package com.scrs.app;
 
 import com.scrs.config.RepositoryFactory;
+import com.scrs.exception.*;
 import com.scrs.model.Course;
 import com.scrs.model.Enrollment;
+import com.scrs.model.EnrollmentStatus;
 import com.scrs.model.Student;
+import com.scrs.repository.CourseRepository;
+import com.scrs.repository.EnrollmentRepository;
+import com.scrs.repository.StudentRepository;
 import com.scrs.service.EnrollmentService;
 import com.scrs.service.impl.EnrollmentServiceImpl;
-import com.scrs.repository.CourseRepository;
-import com.scrs.repository.StudentRepository;
-import com.scrs.util.DataLoader;
 import com.scrs.util.JsonCourseLoader;
 import com.scrs.util.SessionManager;
 import com.scrs.util.TableInitializer;
 
-import java.nio.file.LinkOption;
 import java.util.List;
 import java.util.Scanner;
 
 public class StudentCourseRegistrationSystem {
+
+    // --- Color Codes ---
+    private static final String GREEN = "\u001B[32m";
+    private static final String RED = "\u001B[31m";
+    private static final String YELLOW = "\u001B[33m";
+    private static final String CYAN = "\u001B[36m";
+    private static final String RESET = "\u001B[0m";
+
+    // --- Repos ---
+    private static final CourseRepository courseRepo = RepositoryFactory.courseRepository();
+    private static final StudentRepository studentRepo = RepositoryFactory.studentRepository();
+    private static final EnrollmentRepository enrollmentRepo = RepositoryFactory.enrollmentRepository();
+    private static final EnrollmentService service = new EnrollmentServiceImpl(courseRepo, studentRepo, enrollmentRepo);
+
+    // ---  In-Memory Session ---
+    private static String loggedInStudent = null;
+
     public static void main(String[] args) {
-        // Build DB tables only if missing (fast startup)
-        TableInitializer.main(args);
-
-        // Seed students (courses come only from JSON file)
-       DataLoader.seedStudents();
+        //TableInitializer.main(args);
+        //--- Json file loader
         JsonCourseLoader.seedCourses("src/main/resources/courses.json");
-
-        EnrollmentService service = new EnrollmentServiceImpl(
-                RepositoryFactory.courseRepository(),
-                RepositoryFactory.studentRepository(),
-                RepositoryFactory.enrollmentRepository()
-        );
-
-        StudentRepository studentRepo = RepositoryFactory.studentRepository();
-        CourseRepository courseRepo = RepositoryFactory.courseRepository();
+        printBanner();
 
         Scanner sc = new Scanner(System.in);
-        System.out.println("Welcome to SCRS (Student Course Registration System)");
-
         while (true) {
-            if (!SessionManager.isLoggedIn()) {
-                // 👉 Not logged in yet
-                System.out.println("\nMain Menu:");
-                System.out.println("1. Signup");
-                System.out.println("2. Login");
-                System.out.println("3. Exit");
-                System.out.print("Choice: ");
-                String c = sc.nextLine();
-
-                switch (c) {
-                    case "1": // Signup
-                        System.out.print("Enter new StudentId: ");
-                        String sid = sc.nextLine();
-                        System.out.print("Name: ");
-                        String name = sc.nextLine();
-                        System.out.print("Email: ");
-                        String email = sc.nextLine();
-                        studentRepo.save(new Student(sid, name, email));
-                        System.out.println("Signup successful for " + sid);
-                        break;
-
-                    case "2": // Login
-                        System.out.print("Enter StudentId or Name: ");
-                        String loginInput = sc.nextLine();
-                        Student st = studentRepo.findById(loginInput);
-                        if (st == null) st = studentRepo.findByName(loginInput);
-
-                        if ( st == null) {
-                            System.out.println("Student not found. Please signup first.");
-                        } else {
-                            SessionManager.login(st.getStudentId());
-                            System.out.println("Welcome, " + st.getName() + "!");
-                        }
-                        break;
-
-                    case "3":
-                        System.out.println("Goodbye!");
-                        sc.close();
-                        return;
-
-                    default:
-                        System.out.println("Invalid choice.");
-                }
-            } else {
-                // 👉 Student is logged in
-                System.out.println("\nDashboard:");
-                System.out.println("1. View All Courses");
-                System.out.println("2. Search Course by Keyword (tags/title)");
-                System.out.println("3. View My Enrollments");
-                System.out.println("4. Logout");
-                System.out.print("Choice: ");
-                String c = sc.nextLine();
-
-                switch (c) {
-                    case "1": // Show all courses
-                        List<Course> courses = courseRepo.findAll();
-                        System.out.println("\nAvailable Courses:");
-                        for (Course ci : courses) {
-                            System.out.println(ci.getCourseId() + " | " + ci.getTitle() +
-                                    " | Seats: " + ci.getCurrentEnrolledCount() + "/" + ci.getMaxSeats() +
-                                    " | Deadline: " + ci.getLatestEnrollmentBy());
-                        }
-                        System.out.print("Enter CourseId to enroll or 'back': ");
-                        String courseId = sc.nextLine();
-                        if (!courseId.equalsIgnoreCase("back")) {
-                            try {
-                                Enrollment enr = service.enroll(SessionManager.getCurrentStudentId(), courseId);
-                                System.out.println("Enrollment status: " + enr.getStatus());
-                            } catch (Exception ex) {
-                                System.out.println("Error: " + ex.getMessage());
-                            }
-                        }
-                        break;
-
-                    case "2": // Search by tag/title
-                        System.out.print("Enter keyword (e.g., Java, Cloud, Beginner): ");
-                        String keyword = sc.nextLine().toLowerCase();
-                        List<Course> matches = courseRepo.findAll().stream()
-                                .filter(ci -> ci.getTitle().toLowerCase().contains(keyword) ||
-                                        (ci.getTags() != null && ci.getTags().toLowerCase().contains(keyword)))
-                                .toList();
-
-                        if (matches.isEmpty()) {
-                            System.out.println("No courses found for: " + keyword);
-                        } else {
-                            for (Course ci : matches) {
-                                System.out.println(ci.getCourseId() + " | " + ci.getTitle() +
-                                        " | Seats: " + ci.getCurrentEnrolledCount() + "/" + ci.getMaxSeats() +
-                                        " | Deadline: " + ci.getLatestEnrollmentBy());
-                            }
-                        }
-                        break;
-
-                    case "3": // My Enrollments
-                        List<Enrollment> myEnrolls =
-                                RepositoryFactory.enrollmentRepository().findByStudent(SessionManager.getCurrentStudentId());
-                        System.out.println("\nMy Enrollments:");
-                        if (myEnrolls.isEmpty()) {
-                            System.out.println("No enrollments yet.");
-                        } else {
-                            for (Enrollment e : myEnrolls) {
-                                System.out.println(e.getCourseId() + " | Status: " + e.getStatus());
-                            }
-                            System.out.print("Enter CourseId to drop or 'back': ");
-                            String dropId = sc.nextLine();
-                            if (!dropId.equalsIgnoreCase("back")) {
-                                try {
-                                    service.drop(SessionManager.getCurrentStudentId(), dropId);
-                                    System.out.println("Dropped successfully.");
-                                } catch (Exception ex) {
-                                    System.out.println("Error: " + ex.getMessage());
-                                }
-                            }
-                        }
-                        break;
-
-                    case "4":
-                        SessionManager.logout();
-                        System.out.println("Logged out.");
-                        break;
-
-                    default:
-                        System.out.println("Invalid choice.");
-                }
-            }
+            if (loggedInStudent == null) mainMenu(sc);
+            else dashboard(sc);
         }
+    }
+
+    // === MENU Options ===
+    private static void mainMenu(Scanner sc) {
+
+        System.out.print("""
+                
+                ================== MAIN MENU ==================
+                1) Signup
+                2) Login
+                3) Exit
+                Enter choice : """);
+        switch (sc.nextLine().trim()) {
+            case "1" -> signup(sc);
+            case "2" -> login(sc);
+            case "3" -> exitApp();
+            default -> printlnWarn("Please choose a valid option (1–3).");
+        }
+    }
+
+    private static void dashboard(Scanner sc) {
+        System.out.print("""
+                
+                ================== DASHBOARD ==================
+                1) View all courses
+                2) Search Courses(Ex: Java , AWS)
+                3) My Enrollments
+                4) Logout
+                Enter choice: """);
+        switch (sc.nextLine().trim()) {
+            case "1" -> listCoursesAndEnroll(sc);
+            case "2" -> searchCourses(sc);
+            case "3" -> viewMyEnrollments(sc);
+            case "4" -> logout();
+            default -> printlnWarn("Invalid option. Try again.");
+        }
+    }
+
+    // === AUTHENTICATION ===
+    private static void signup(Scanner sc) {
+        System.out.print("Enter new Student ID: ");
+        String sid = sc.nextLine().trim();
+        if (sid.isEmpty()) {
+            printlnError("Student ID cannot be empty!");
+            return;
+        }
+
+        System.out.print("Enter Name: ");
+        String name = sc.nextLine().trim();
+        if (name.isEmpty()) {
+            printlnError("Name cannot be empty!");
+            return;
+        }
+
+        System.out.print("Enter Email: ");
+        String email = sc.nextLine().trim();
+        if (email.isEmpty()) {
+            printlnError("Email cannot be empty!");
+            return;
+        }
+
+        try {
+            // Save new student record
+            Student s = new Student(sid, name, email);
+            studentRepo.save(s);
+            printlnSuccess("Signup successful for " + sid + " (" + name + ")");
+        } catch (Exception e) {
+            printlnError("Error during signup: " + e.getMessage());
+        }
+    }
+
+
+    private static void login(Scanner sc) {
+        System.out.print("Enter Student ID or Name: ");
+        String input = sc.nextLine().trim();
+        Student s = studentRepo.findById(input);
+        if (s == null) s = studentRepo.findByName(input);
+
+        if (s == null) {
+            printlnError("No student found. Please signup first!");
+        } else {
+            loggedInStudent = s.getStudentId();
+            printlnSuccess("Welcome " + s.getName() + "! You are now logged in." +
+                    "\n---------- Happy learning--------------");
+        }
+    }
+
+    private static void logout() {
+        loggedInStudent = null;
+        printlnInfo("You have been logged out successfully.");
+    }
+
+    // === COURSE VIEW & ENROLLMENT ===
+    private static void listCoursesAndEnroll(Scanner sc) {
+        List<Course> courses = courseRepo.findAll();
+        if (courses.isEmpty()) {
+            printlnWarn("No courses available!");
+            return;
+        }
+        printCourses(courses);
+        System.out.print("Enter Course ID to Enroll or 'back': ");
+        String id = sc.nextLine().trim();
+        if (!id.equalsIgnoreCase("back")) enrollCourse(id);
+    }
+
+    private static void searchCourses(Scanner sc) {
+        System.out.print("Enter keyword: ");
+        String keyword = sc.nextLine().trim().toLowerCase();
+        List<Course> results = courseRepo.findAll().stream()
+                .filter(c -> c.getTitle().toLowerCase().contains(keyword))
+                .toList();
+        if (results.isEmpty()) {
+            printlnWarn("No courses found for '" + keyword + "'.");
+        } else {
+            printCourses(results);
+            System.out.print("Enter Course ID to Enroll or 'back': ");
+            String id = sc.nextLine().trim();
+            if (!id.equalsIgnoreCase("back")) enrollCourse(id);
+        }
+    }
+
+    private static void viewMyEnrollments(Scanner sc) {
+        List<Enrollment> enrolls = enrollmentRepo.findByStudent(loggedInStudent);
+        if (enrolls.isEmpty()) {
+            printlnWarn("You have no enrollments yet.");
+            return;
+        }
+        System.out.println(CYAN + "\n--- Your Enrollments ---" + RESET);
+        enrolls.forEach(e ->
+                System.out.printf("%-10s | %-10s%n", e.getCourseId(),
+                        e.getStatus() == EnrollmentStatus.ENROLLED ? GREEN + "ENROLLED" + RESET :
+                                YELLOW + "WAITLISTED" + RESET));
+        System.out.print("Enter Course ID to Drop or 'back': ");
+        String id = sc.nextLine().trim();
+        if (!id.equalsIgnoreCase("back")) dropCourse(id);
+    }
+
+    // === ENROLL / DROP ===
+    private static void enrollCourse(String courseId) {
+        try {
+            Enrollment e = service.enroll(loggedInStudent, courseId);
+            if (e.getStatus() == EnrollmentStatus.ENROLLED)
+                printlnSuccess(" Enrolled successfully in " + courseId);
+            else
+                printlnWarn(" Seats full , Added to waitlist for " + courseId);
+        } catch (DuplicateEnrollmentException ex) {
+            printlnWarn(" Already enrolled or waitlisted!");
+        } catch (CourseNotFoundException ex) {
+            printlnError(" Course not found!");
+        } catch (WaitlistFullException ex) {
+            printlnError(" Waitlist full for this course!");
+        } catch (Exception ex) {
+            printlnError(" Enrollment failed: " + ex.getMessage());
+        }
+    }
+
+    private static void dropCourse(String courseId) {
+        try {
+            service.drop(loggedInStudent, courseId);
+            printlnSuccess(" Dropped course " + courseId + " successfully!");
+        } catch (Exception ex) {
+            printlnError(" Drop failed: " + ex.getMessage());
+        }
+    }
+
+    // === PRINT HELPERS ===
+    private static void printCourses(List<Course> courses) {
+        System.out.println(CYAN + "\n--- Available Courses ---" + RESET);
+        courses.forEach(c ->
+                System.out.printf("%-10s | %-25s | Seats %d/%d%n",
+                        c.getCourseId(), c.getTitle(),
+                        c.getCurrentEnrolledCount(), c.getMaxSeats()));
+    }
+
+    private static void exitApp() {
+        printlnInfo("Exiting... Goodbye!");
+        System.exit(0);
+    }
+
+    // === COLOR PRINTS ===
+    private static void printlnSuccess(String msg) { System.out.println(GREEN + msg + RESET); }
+    private static void printlnError(String msg) { System.out.println(RED + msg + RESET); }
+    private static void printlnWarn(String msg) { System.out.println(YELLOW + msg + RESET); }
+    private static void printlnInfo(String msg) { System.out.println(CYAN + msg + RESET); }
+
+    private static void printBanner() {
+        System.out.println(CYAN + """
+        ===================================================
+                 STUDENT COURSE REGISTRATION SYSTEM
+        ===================================================
+        """ + RESET);
+        printlnInfo("Click. Enroll. Learn — Seamless Registration, Smarter Learning .");
     }
 }

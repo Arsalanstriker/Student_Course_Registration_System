@@ -15,8 +15,8 @@ public class Enrollment {
         this.studentId = studentId;
         this.courseId = courseId;
         this.status = status;
-        this.waitlistPosition = 0;
-        this.timestamp = LocalDateTime.now();
+        this.waitlistPosition = 0; // arg not passed in constructor default value 0
+        this.timestamp = LocalDateTime.now();  //LocalDatetime
     }
 
     // getters/setters

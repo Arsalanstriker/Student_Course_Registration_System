@@ -12,7 +12,7 @@ import java.util.Map;
 public class DynamoDbCourseRepository implements CourseRepository {
 
     private final DynamoDbClient client;
-    private static final String TABLE = "Courses"; // 👉 Hardcoded table name
+    private static final String TABLE = "Courses"; // Courses Table Name
 
     public DynamoDbCourseRepository(DynamoDbClient client) {
         this.client = client;
@@ -44,5 +44,15 @@ public class DynamoDbCourseRepository implements CourseRepository {
             list.add(CourseMapper.fromItem(item));
         }
         return list;
+    }
+    @Override
+    public void delete(String courseId){
+        Map<String, AttributeValue> key =Map.of("courseId",AttributeValue.fromS(courseId));
+        DeleteItemRequest request =DeleteItemRequest.builder()
+                .tableName(TABLE)
+                .key(key)
+                .build();
+
+        client.deleteItem(request);
     }
 }
