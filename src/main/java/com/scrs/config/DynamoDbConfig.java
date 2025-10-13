@@ -15,7 +15,7 @@ public class DynamoDbConfig {
                         //dummy credentials
                         AwsBasicCredentials.create("dummy", "dummy")))
                 //Hosting on 8001 port
-                .endpointOverride(URI.create("http://localhost:8001"))
+                .endpointOverride(URI.create("http://localhost:8005"))
                 .build();
     }
 }

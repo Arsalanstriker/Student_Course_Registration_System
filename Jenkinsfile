@@ -1,36 +1,28 @@
 pipeline {
     agent any
 
-    environment {
-        JAR_URL = 'https://github.com/Arsalanstriker/Student_Course_Registration_System/releases/download/v1.0/student-course-registration-1.0-SNAPSHOT-jar-with-dependencies.jar'
-        JAR_NAME = 'student-course-registration.jar'
-    }
-
     stages {
-        stage('Download JAR') {
+        stage('Checkout') {
             steps {
-                echo "⬇️ Downloading JAR file..."
-                powershell '''
-                if (Test-Path $env:JAR_NAME) { Remove-Item $env:JAR_NAME -Force }
-                Invoke-WebRequest -Uri $env:JAR_URL -OutFile $env:JAR_NAME
-                '''
+                echo " Checking out source code..."
+                git branch: 'main', url: 'https://github.com/Arsalanstriker/Student_Course_Registration_System.git'
             }
         }
 
-        stage('Deploy JAR') {
+        stage('Build JAR') {
             steps {
-                echo "🚀 Deploying JAR..."
-                powershell '''
-                # Stop any old app instance
-                $process = Get-Process java -ErrorAction SilentlyContinue
-                if ($process) {
-                    Write-Host "Stopping old Java app..."
-                    Stop-Process -Name java -Force
-                }
+                echo " Building JAR with dependencies..."
+                bat 'mvn clean package -DskipTests'
+            }
+        }
 
-                # Start new instance
-                Write-Host "Starting new Java app..."
-                Start-Process "java" "-jar $env:JAR_NAME" -NoNewWindow
+        stage('Docker Build & Deploy') {
+            steps {
+                echo " Building and deploying Docker containers..."
+                powershell '''
+                docker-compose down || Write-Host "No containers running"
+                docker-compose build --no-cache
+                docker-compose up -d
                 '''
             }
         }
@@ -38,10 +30,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Application deployed successfully!"
+            echo " Build & Deployment successful!"
         }
         failure {
-            echo "❌ Deployment failed!"
+            echo " Build/Deployment failed!"
         }
     }
 }
