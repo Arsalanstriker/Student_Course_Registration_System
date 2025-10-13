@@ -7,27 +7,39 @@ import com.scrs.config.RepositoryFactory;
 import com.scrs.model.Course;
 import com.scrs.repository.CourseRepository;
 
-import java.io.File;
+import java.io.InputStream;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 public class JsonCourseLoader {
-    public static void seedCourses(String filePath) {
+
+    public static void seedCourses(String fileName) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule()); //  Helps parse LocalDate
+            mapper.registerModule(new JavaTimeModule()); // helps parse LocalDate
 
-            List<Course> courses = mapper.readValue(new File(filePath), new TypeReference<>() {});
+            //  Load file from classpath (inside JAR)
+            InputStream inputStream = JsonCourseLoader.class
+                    .getClassLoader()
+                    .getResourceAsStream(fileName);
+
+            if (inputStream == null) {
+                throw new FileNotFoundException("Could not find " + fileName + " in classpath");
+            }
+
+            List<Course> courses = mapper.readValue(inputStream, new TypeReference<>() {});
             CourseRepository repo = RepositoryFactory.courseRepository();
 
             for (Course c : courses) {
-                //  Only save if this course does NOT already exist in DB
                 if (repo.findById(c.getCourseId()) == null) {
                     repo.save(c);
                 }
             }
-            System.out.println("");
+
+            System.out.println(" Successfully loaded courses from " + fileName);
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load courses.json", e);
+            throw new RuntimeException("Failed to load " + fileName, e);
         }
     }
 }

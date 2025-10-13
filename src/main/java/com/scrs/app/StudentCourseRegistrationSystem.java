@@ -39,7 +39,7 @@ public class StudentCourseRegistrationSystem {
     public static void main(String[] args) {
         //TableInitializer.main(args);
         //--- Json file loader
-        JsonCourseLoader.seedCourses("src/main/resources/courses.json");
+        JsonCourseLoader.seedCourses("courses.json");
         printBanner();
 
         Scanner sc = new Scanner(System.in);
