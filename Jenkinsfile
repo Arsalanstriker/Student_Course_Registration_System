@@ -2,42 +2,65 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'   // Make sure Maven is installed and named 'Maven' in Jenkins global tools
-        jdk 'JDK17'     // Make sure JDK 17 is configured in Jenkins global tools
+        maven 'Maven'   // Must match name in Global Tool Configuration
+        jdk 'JDK17'     // Must match name in Global Tool Configuration
+    }
+
+    environment {
+        // Helps detect OS
+        IS_WINDOWS = isUnix() ? 'false' : 'true'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo "Cloning repository..."
+                echo "📦 Cloning repository..."
                 git branch: 'main', url: 'https://github.com/Arsalanstriker/Student_Course_Registration_System.git'
             }
         }
 
         stage('Build') {
             steps {
-                echo " Cleaning and compiling project..."
-                bat 'mvn clean compile'
+                script {
+                    echo "🔨 Cleaning and compiling project..."
+                    if (isUnix()) {
+                        sh 'mvn clean compile'
+                    } else {
+                        bat 'mvn clean compile'
+                    }
+                }
             }
         }
 
         stage('Run Tests') {
             steps {
-                echo " Running all unit and integration tests..."
-                bat 'mvn test'
+                script {
+                    echo "🧪 Running tests..."
+                    if (isUnix()) {
+                        sh 'mvn test'
+                    } else {
+                        bat 'mvn test'
+                    }
+                }
             }
         }
 
         stage('Package') {
             steps {
-                echo " Building JAR package..."
-                bat 'mvn clean package'
+                script {
+                    echo "📦 Packaging the JAR..."
+                    if (isUnix()) {
+                        sh 'mvn package'
+                    } else {
+                        bat 'mvn package'
+                    }
+                }
             }
         }
 
         stage('Archive Artifacts') {
             steps {
-                echo "Archiving generated JAR file..."
+                echo "💾 Archiving built JAR..."
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
@@ -45,10 +68,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Build completed successfully! JAR is available in Jenkins artifacts."
+            echo "✅ Build completed successfully! Download JAR from 'Build Artifacts'."
         }
         failure {
-            echo "❌ Build failed! Check the logs above for errors."
+            echo "❌ Build failed! Check logs for errors."
         }
     }
 }
