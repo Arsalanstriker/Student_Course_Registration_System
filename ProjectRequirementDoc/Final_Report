@@ -1,0 +1,73 @@
+Final Project Report
+Student Course Registration System (SCRS)
+“Click. Enroll. Learn — Seamless Registration. Smart Learning.”
+
+By:Mohammed Arsalain
+Date: 02 October 2025
+
+1. Table Of Content
+1.	1. Introduction
+2.	2. Project Overview
+3.	3. Features
+4.	4. Project Structure
+5.	5. UML Diagrams
+6.	6. Data Structures and Algorithms
+7.	7. DevOps Setup (CI/CD + Docker + Jenkins)
+8.	8. Testing Strategy
+9.	9. Deployment
+10. Conclusion
+
+1. Introduction
+The Student Course Registration System (SCRS) is a Java-based CLI application.
+It simulates the functionality of online learning platforms .
+Students can register, log in, enroll in courses, and manage their waitlists.
+The project showcases my skills in Java programming, DynamoDB integration, and DevOps automation using Jenkins and Docker.
+
+2. Project Overview
+The system allows students to register for courses while following specific business rules such as maximum enrollments, waitlist caps, and enrollment deadlines.
+Administrators can manage courses through JSON files.
+The CLI interface ensures easy interaction for users.
+
+
+3. Features
+•	Student signup and login
+•	Course seeding from JSON
+•	Enroll, drop, and view courses
+•	Duplicate enrollment prevention
+•	Waitlist management (FIFO order)
+•	Admin functions to view and manage data
+•	Command Line Interface (CLI) for interaction
+
+4. Project Structure
+The project follows a modular Maven structure with distinct packages for configuration, exceptions, models, repositories, and services.
+This structure ensures scalability and maintainability.
+
+5. UML Diagrams
+The design is captured using UML Class and Sequence Diagrams representing key relationships and workflows.
+
+
+6. Data Structures and Algorithms
+The project uses Java collections such as Lists and HashMaps to manage students, courses, and enrollments efficiently.
+Sorting and promotion of waitlisted students are implemented using Comparators for FIFO order.
+
+7. DevOps Setup (CI/CD + Docker + Jenkins)
+The project was integrated into a full DevOps pipeline using Jenkins for continuous integration and Docker for deployment.
+The pipeline automated build, test, and deployment stages, ensuring a smooth workflow from development to production.
+8. Testing Strategy
+JUnit was used to verify business logic and data integrity.
+Unit and integration tests validated core rules such as enrollment limits, waitlist management, and deadline enforcement.
+
+9. Deployment
+The application was packaged and deployed using Docker Compose alongside DynamoDB Local.
+Jenkins handled CI/CD automation for build, test, and deployment stages, ensuring consistency and reliability across environments.
+
+
+10. Conclusion
+The Student Course Registration System was successfully completed,
+meeting all technical and functional objectives.
+
+
+It demonstrates my capabilities in full-stack Java development, cloud-based persistence, and DevOps automation.
+The project represents a complete, production-ready solution and reflects my growth as a software engineer.
+
+
