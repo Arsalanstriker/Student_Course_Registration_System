@@ -1,39 +1,36 @@
 pipeline {
     agent any
 
+    environment {
+        JAR_URL = 'https://github.com/Arsalanstriker/Student_Course_Registration_System/releases/download/v1.0/student-course-registration-1.0-SNAPSHOT-jar-with-dependencies.jar'
+        JAR_NAME = 'student-course-registration.jar'
+    }
+
     stages {
-        stage('Checkout') {
+        stage('Download JAR') {
             steps {
-                git branch: 'main', url: 'https://github.com/Arsalanstriker/Student_Course_Registration_System.git'
-            }
-        }
-
-        stage('Build with Maven') {
-            steps {
-                bat 'mvn clean package -DskipTests'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                bat 'mvn test'
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                echo "🐳 Building Docker Image..."
-                powershell 'docker build -t scrs:1.0 .'
-            }
-        }
-
-        stage('Docker Run') {
-            steps {
-                echo "🚀 Running Docker Container..."
+                echo "⬇️ Downloading JAR file..."
                 powershell '''
-                docker stop scrs-app -ErrorAction SilentlyContinue
-                docker rm scrs-app -ErrorAction SilentlyContinue
-                docker run -d --name scrs-app -p 8080:8080 scrs:1.0
+                if (Test-Path $env:JAR_NAME) { Remove-Item $env:JAR_NAME -Force }
+                Invoke-WebRequest -Uri $env:JAR_URL -OutFile $env:JAR_NAME
+                '''
+            }
+        }
+
+        stage('Deploy JAR') {
+            steps {
+                echo "🚀 Deploying JAR..."
+                powershell '''
+                # Stop any old app instance
+                $process = Get-Process java -ErrorAction SilentlyContinue
+                if ($process) {
+                    Write-Host "Stopping old Java app..."
+                    Stop-Process -Name java -Force
+                }
+
+                # Start new instance
+                Write-Host "Starting new Java app..."
+                Start-Process "java" "-jar $env:JAR_NAME" -NoNewWindow
                 '''
             }
         }
@@ -41,10 +38,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Dockerized CI/CD pipeline completed successfully!"
+            echo "✅ Application deployed successfully!"
         }
         failure {
-            echo "❌ Build/Deployment failed!"
+            echo "❌ Deployment failed!"
         }
     }
 }
