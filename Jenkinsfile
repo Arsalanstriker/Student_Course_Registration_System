@@ -2,13 +2,9 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'   // Must match name in Global Tool Configuration
-        jdk 'JDK17'     // Must match name in Global Tool Configuration
-    }
-
-    environment {
-        // Helps detect OS
-        IS_WINDOWS = isUnix() ? 'false' : 'true'
+        // Optional: Only use if Maven and JDK17 are configured in Jenkins
+        maven 'Maven'
+        jdk 'JDK17'
     }
 
     stages {
@@ -22,7 +18,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    echo "🔨 Cleaning and compiling project..."
+                    echo "🔨 Cleaning and compiling..."
                     if (isUnix()) {
                         sh 'mvn clean compile'
                     } else {
@@ -32,7 +28,7 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+        stage('Test') {
             steps {
                 script {
                     echo "🧪 Running tests..."
@@ -48,7 +44,7 @@ pipeline {
         stage('Package') {
             steps {
                 script {
-                    echo "📦 Packaging the JAR..."
+                    echo "📦 Packaging..."
                     if (isUnix()) {
                         sh 'mvn package'
                     } else {
@@ -60,18 +56,31 @@ pipeline {
 
         stage('Archive Artifacts') {
             steps {
-                echo "💾 Archiving built JAR..."
+                echo "💾 Archiving JAR..."
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
+
+        stage('Debug Info') {
+            steps {
+                script {
+                    echo "📋 Showing environment info..."
+                    if (isUnix()) {
+                        sh 'echo $JAVA_HOME && java -version && mvn -v'
+                    } else {
+                        bat 'echo %JAVA_HOME% && java -version && mvn -v'
+                    }
+                }
             }
         }
     }
 
     post {
         success {
-            echo "✅ Build completed successfully! Download JAR from 'Build Artifacts'."
+            echo "✅ Build succeeded. JAR is available in Jenkins artifacts."
         }
         failure {
-            echo "❌ Build failed! Check logs for errors."
+            echo "❌ Build failed. Check the logs above."
         }
     }
 }
